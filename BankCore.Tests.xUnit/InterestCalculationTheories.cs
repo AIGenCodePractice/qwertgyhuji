@@ -55,7 +55,7 @@ public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
     // Testing simple interest across multiple scenarios (12 tests)
 
     [Theory]
-    [InlineData(1000, 0.08, 12, 960)]  // P*r*t = 1000*0.08*12/12 = 80 (but divides by 10 in buggy code = 960)
+    [InlineData(1000, 0.08, 12, 960)]
     [InlineData(500, 0.05, 6, 150)]
     [InlineData(2000, 0.10, 24, 4000)]
     [InlineData(100, 0.01, 1, 10)]
