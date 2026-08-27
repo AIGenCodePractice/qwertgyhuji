@@ -108,7 +108,8 @@ public class SessionTests
 
     [TestMethod]
     [TestCategory("Functional")]
-    public void Logout_ThenValidate_ReturnsFailure()
+    /// <summary>REQ-AUTH-002 / TC-AUTH-002 — token cannot be reused after logout</summary>
+    public void TC_AUTH_002_Logout_InvalidatesToken_CannotBeReused()
     {
         var session = TestDataHelper.BuildActiveSession(token: "tok-reuse-001");
         var auth = CreateAuthWithSession(session);
