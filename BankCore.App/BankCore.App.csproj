@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS8602;IDE0209;CA1860;IDE0300;CA1861</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Moq" Version="4.20.72" />
