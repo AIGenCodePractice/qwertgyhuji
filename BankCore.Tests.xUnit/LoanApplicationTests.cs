@@ -75,15 +75,13 @@ public class LoanApplicationTests
 
     /// <summary>TC-LOAN-015 / 016</summary>
     [Theory]
-    [InlineData(0.01, false)] // effectively below meaningful min - amount must be positive so 0.01 may pass
+    [InlineData(0, false)]
+    [InlineData(0.01, true)]
     [InlineData(1000, true)]
     public void ApplyForLoan_AmountBoundaries(decimal amount, bool expectSuccess)
     {
         var result = _svc.ApplyForLoan(1, LoanType.Personal, amount, 12, 0.10m, 30_000m, 0m, 700);
-        if (expectSuccess)
-            result.IsSuccess.Should().BeTrue(result.Message);
-        else
-            result.IsSuccess.Should().Be(amount > 0);
+        result.IsSuccess.Should().Be(expectSuccess, result.Message);
     }
 
     /// <summary>TC-LOAN-017 / 018 — rate and term policy boundaries</summary>
