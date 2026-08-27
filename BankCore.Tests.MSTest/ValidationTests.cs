@@ -26,15 +26,13 @@ public class ValidationTests
 
     // ─── Positive ───────────────────────────────────────────────────────────
 
-    /// <summary>TC-VAL-001 / TC-VAL-020 — Accept valid South African ID number format</summary>
+    /// <summary>TC-VAL-001 / TC-VAL-020 — Accept valid South African ID number format and checksum</summary>
     [TestMethod]
     [TestCategory("Functional")]
-    [DataRow("9001015800085")]
+    [DataRow("9001015800088")]
     [DataRow("8001015009087")]
     public void IsValidSouthAfricanIdNumber_Valid13Digit_ReturnsTrue(string id)
     {
-        // Note: production has BUG-001 (month <= 13 always returns true early).
-        // These still exercise the entry path.
         Assert.IsTrue(_validator.IsValidSouthAfricanIdNumber(id));
     }
 
@@ -161,15 +159,13 @@ public class ValidationTests
             "Known gap: payload has no listed SQL keyword; production returns true.");
     }
 
-    /// <summary>TC-VAL-010 — Reject amount with more than two decimal places is not enforced in service;
-    /// document that IsValidAmount only checks range. Range rejection for over-max:</summary>
+    /// <summary>TC-VAL-010 — Reject amount above the default inclusive maximum</summary>
     [TestMethod]
     [TestCategory("Boundary")]
     public void IsValidAmount_AboveMax_ReturnsFalse()
     {
-        // BUG-002: uses amount < max, so exactly 999999.99 also fails
+        Assert.IsTrue(_validator.IsValidAmount(999_999.99m));
         Assert.IsFalse(_validator.IsValidAmount(1_000_000.00m));
-        Assert.IsFalse(_validator.IsValidAmount(999_999.99m)); // known bug boundary
     }
 
     /// <summary>TC-VAL-011 — Reject phone/name containing invalid characters</summary>
