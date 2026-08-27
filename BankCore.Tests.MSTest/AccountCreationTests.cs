@@ -35,7 +35,7 @@ public class AccountCreationTests
         _service = null!;
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Savings", 100.0)]
     [DataRow("Current", 500.0)]
     [DataRow("FixedDeposit", 1000.0)]
@@ -54,7 +54,7 @@ public class AccountCreationTests
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Once);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("Savings", 99.99)]
     [DataRow("Current", 499.99)]
     [DataRow("FixedDeposit", 999.99)]
