@@ -9,10 +9,9 @@ namespace BankCore.Tests.xUnit;
 /// REQ-INT-001 … REQ-INT-007 / TC-INT-001 … TC-INT-021
 /// Closes pending Interest Calculator rows on the RTM.
 /// </summary>
-public class InterestRequirementTests : IClassFixture<CalculatorFixture>
+public class InterestRequirementTests(CalculatorFixture fixture) : IClassFixture<CalculatorFixture>
 {
-    private readonly IInterestCalculator _calc;
-    public InterestRequirementTests(CalculatorFixture fixture) => _calc = fixture.Calculator;
+    private readonly IInterestCalculator _calc = fixture.Calculator;
 
     // ---------- REQ-INT-001 / TC-INT-001, 006, 014 ----------
 
