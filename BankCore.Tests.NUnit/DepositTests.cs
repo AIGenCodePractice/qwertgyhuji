@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using System.Diagnostics;
 using Moq;
 using BankCore.Core.Interfaces;
 using BankCore.Core.Models;
@@ -36,30 +37,25 @@ public class DepositTests
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
-        // Expensive setup that runs once for the entire test class
         TestContext.WriteLine("OneTimeSetUp: Initializing test fixtures");
     }
 
     [OneTimeTearDown]
     public void OneTimeTearDown()
     {
-        // Cleanup that runs once after all tests complete
         TestContext.WriteLine("OneTimeTearDown: Cleaning up shared resources");
     }
 
     [SetUp]
     public void Setup()
     {
-        // Reinitialize mocks before each test
         _mockAccountRepo = new Mock<IAccountRepository>();
         _mockTxnRepo = new Mock<ITransactionRepository>();
         _mockValidator = new Mock<IValidationService>();
         _mockAudit = new Mock<IAuditService>();
 
-        // Configure default validator behavior
         _mockValidator.Setup(v => v.IsValidAmount(It.IsAny<decimal>(), It.IsAny<decimal>(), It.IsAny<decimal>())).Returns(true);
 
-        // Create test account
         _testAccount = new Account
         {
             Id = 1,
@@ -93,13 +89,8 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_WithValidAmount_ReturnsSuccess()
     {
-        // Arrange
         const decimal depositAmount = 1000m;
-
-        // Act
         var result = _transactionService.Deposit(1, depositAmount, "Regular deposit", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Data, Is.Not.Null);
         Assert.That(result.Data!.Amount, Is.EqualTo(depositAmount));
@@ -113,16 +104,10 @@ public class DepositTests
     [TestCase(5000, "R5000 deposit")]
     public void Deposit_WithVariousAmounts_UpdatesAccountBalance(decimal amount, string description)
     {
-        // Arrange
         decimal balanceBefore = _testAccount.Balance;
-
-        // Act
         var result = _transactionService.Deposit(1, amount, description, "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Data!.Amount, Is.EqualTo(amount));
-        // Balance should increase
         _mockAccountRepo.Verify(r => r.Update(It.Is<Account>(a => a.Balance == balanceBefore + amount)), Times.Once);
     }
 
@@ -130,14 +115,9 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_ToInactiveAccount_ReturnsFailed()
     {
-        // Arrange
         _testAccount.Status = AccountStatus.Dormant;
         _mockAccountRepo.Setup(r => r.GetById(1)).Returns(_testAccount);
-
-        // Act
         var result = _transactionService.Deposit(1, 500m, "Test", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Message, Does.Contain("Active"));
     }
@@ -146,10 +126,7 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_NegativeAmount_ReturnsFailed()
     {
-        // Act
         var result = _transactionService.Deposit(1, -100m, "Negative deposit", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Message, Does.Contain("greater than zero"));
     }
@@ -158,51 +135,61 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_ZeroAmount_ReturnsFailed()
     {
-        // Act
         var result = _transactionService.Deposit(1, 0m, "Zero deposit", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.False);
     }
 
     [Test]
     [Category("Performance")]
-    [CancelAfter(2000)]
-    public void Deposit_PerformanceTest_CompleteWithin2Seconds()
+    [Timeout(2000)]
+    public void Deposit_PerformanceTest_1000SequentialOperationsCompleteWithin2Seconds()
     {
-        // Act - Should complete within 2 seconds
-        var result = _transactionService.Deposit(1, 1000m, "Performance test", "TELLER01");
+        var stopwatch = Stopwatch.StartNew();
+        for (var i = 0; i < 1000; i++)
+        {
+            var result = _transactionService.Deposit(1, 1m, "Performance test", "TELLER01");
+            Assert.That(result.IsSuccess, Is.True, result.Message);
+        }
+        stopwatch.Stop();
 
-        // Assert
-        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(2000));
     }
 
     [Test]
-    [Category("Critical")]
+    [Category("Performance")]
     [Retry(3)]
-    public void Deposit_RetryableOperation_SucceedsEventually()
+    [Timeout(2000)]
+    public void Deposit_PerformanceMeasurement_TimingSensitiveOperationMeetsThreshold()
     {
-        // This test retries up to 3 times if it fails
-        // Useful for timing-sensitive operations
+        var stopwatch = Stopwatch.StartNew();
+        var result = _transactionService.Deposit(1, 500m, "Timing-sensitive retry test", "TELLER01");
+        stopwatch.Stop();
 
-        // Act
-        var result = _transactionService.Deposit(1, 500m, "Retry test", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.True);
+        Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(2000));
+    }
+
+    [Test]
+    [Category("Negative")]
+    public void Deposit_PersistenceFailure_PropagatesConfiguredRepositoryException()
+    {
+        _mockTxnRepo
+            .Setup(r => r.Add(It.IsAny<Transaction>()))
+            .Throws(new InvalidOperationException("Simulated transaction repository failure."));
+
+        Assert.That(
+            () => _transactionService.Deposit(1, 500m, "Persistence failure", "TELLER01"),
+            Throws.TypeOf<InvalidOperationException>());
+
+        _mockTxnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
 
     [Test]
     [Category("Critical")]
     public void Deposit_CallsAuditLogWithCorrectEventType()
     {
-        // Arrange
         _mockAudit.Setup(a => a.Log(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>()));
-
-        // Act
         _transactionService.Deposit(1, 500m, "Test", "TELLER01");
-
-        // Assert
         _mockAudit.Verify(a => a.Log(
             It.Is<string>(e => e == "DEPOSIT"),
             It.IsAny<string>(),
@@ -216,13 +203,8 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_RepositoryAddIsCalledOnce()
     {
-        // Arrange
         _mockTxnRepo.Setup(r => r.Add(It.IsAny<Transaction>()));
-
-        // Act
         _transactionService.Deposit(1, 500m, "Test", "TELLER01");
-
-        // Assert
         _mockTxnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
 
@@ -230,15 +212,10 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_GeneratesTransactionReference()
     {
-        // Arrange
         Transaction? capturedTxn = null;
         _mockTxnRepo.Setup(r => r.Add(It.IsAny<Transaction>()))
             .Callback<Transaction>(t => capturedTxn = t);
-
-        // Act
         var result = _transactionService.Deposit(1, 500m, "Test", "TELLER01");
-
-        // Assert
         Assert.That(result.Data!.TransactionReference, Is.Not.Null.And.Not.Empty);
         Assert.That(result.Data.TransactionReference, Does.StartWith("TXN-"));
     }
@@ -247,14 +224,9 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_MultipleAssertions_AllMustPass()
     {
-        // Arrange
         const decimal amount = 1500m;
-        decimal originalBalance = _testAccount.Balance;
-
-        // Act
         var result = _transactionService.Deposit(1, amount, "Multi-assert test", "TELLER01");
 
-        // Assert - Multiple assertions checked together
         Assert.Multiple((global::System.Action)(() =>
         {
             Assert.That(result.IsSuccess, Is.True);
@@ -270,10 +242,7 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_MaximumTransactionLimit_ExceedsLimit()
     {
-        // Act
         var result = _transactionService.Deposit(1, 60000m, "Over limit", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.False);
         Assert.That(result.Message, Does.Contain("exceed"));
     }
@@ -283,17 +252,13 @@ public class DepositTests
     [TestCaseSource(nameof(GetDepositTestCases))]
     public void Deposit_WithComplexTestData_VariousScenarios(DepositTestCase testCase)
     {
-        // Arrange
         if (!testCase.IsAccountActive)
         {
             _testAccount.Status = AccountStatus.Closed;
             _mockAccountRepo.Setup(r => r.GetById(1)).Returns(_testAccount);
         }
 
-        // Act
         var result = _transactionService.Deposit(1, testCase.Amount, testCase.Description, "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.EqualTo(testCase.ShouldSucceed));
         if (!testCase.ShouldSucceed)
         {
@@ -301,7 +266,6 @@ public class DepositTests
         }
     }
 
-    // TestCaseSource data provider
     private static IEnumerable<DepositTestCase> GetDepositTestCases()
     {
         yield return new DepositTestCase
@@ -336,15 +300,10 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_LastActivityDateUpdated_ToCurrentTime()
     {
-        // Arrange
         var beforeDeposit = DateTime.UtcNow;
-
-        // Act
         _transactionService.Deposit(1, 500m, "Test", "TELLER01");
-
-        // Assert
-        _mockAccountRepo.Verify(r => r.Update(It.Is<Account>(a => 
-            a.LastActivityDate >= beforeDeposit && 
+        _mockAccountRepo.Verify(r => r.Update(It.Is<Account>(a =>
+            a.LastActivityDate >= beforeDeposit &&
             a.LastActivityDate <= DateTime.UtcNow)), Times.Once);
     }
 
@@ -352,20 +311,11 @@ public class DepositTests
     [Category("Critical")]
     public void Deposit_CombinedWithValues_MultipleAmounts([Values(100, 250, 500, 1000, 5000)] decimal amount)
     {
-        // This test runs multiple times with different values
-        // Generates combinatorial test coverage
-
-        // Act
         var result = _transactionService.Deposit(1, amount, $"Value test {amount}", "TELLER01");
-
-        // Assert
         Assert.That(result.IsSuccess, Is.True);
         Assert.That(result.Data!.Amount, Is.EqualTo(amount).Within(0.01m));
     }
 
-    /// <summary>
-    /// Test data class for complex deposit scenarios
-    /// </summary>
     public class DepositTestCase
     {
         public decimal Amount { get; set; }
