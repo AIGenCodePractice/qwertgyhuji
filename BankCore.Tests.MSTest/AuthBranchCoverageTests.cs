@@ -107,6 +107,9 @@ public class AuthBranchCoverageTests
 
         _validator.Setup(v => v.IsValidPassword("GoodP@ss2")).Returns(true);
         _hasher.Setup(h => h.HashPassword("GoodP@ss2")).Returns(("oldhash", "newsalt"));
+        var reusedPasswordUser = User();
+        reusedPasswordUser.PasswordHistory = new List<string> { "oldhash" };
+        _users.Setup(r => r.GetById(7)).Returns(reusedPasswordUser);
         Assert.IsFalse(_auth.ChangePassword("token", "current", "GoodP@ss2").IsSuccess);
 
         _hasher.Setup(h => h.HashPassword("GoodP@ss2")).Returns(("newhash", "newsalt"));
