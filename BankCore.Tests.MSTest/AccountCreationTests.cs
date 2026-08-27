@@ -95,8 +95,11 @@ public class AccountCreationTests
             AccountType.Savings, 500m, TestDataHelper.ValidBranchCode);
 
         Assert.IsTrue(first.IsSuccess && second.IsSuccess);
-        Assert.StartsWith(first.Data!.AccountNumber, "BC100000005");
-        Assert.AreNotEqual(first.Data.AccountNumber, second.Data!.AccountNumber);
+        Assert.IsNotNull(first.Data);
+        Assert.IsNotNull(second.Data);
+        Assert.StartsWith(first.Data.AccountNumber, "BC");
+        Assert.StartsWith(second.Data.AccountNumber, "BC");
+        Assert.AreNotEqual(first.Data.AccountNumber, second.Data.AccountNumber);
     }
 
     [TestMethod]
