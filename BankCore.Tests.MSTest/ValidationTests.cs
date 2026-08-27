@@ -19,7 +19,7 @@ public class ValidationTests
 
     [TestMethod]
     [TestCategory("Functional")]
-    [DataRow("9001015800085")]
+    [DataRow("9001015009087")]
     [DataRow("8001015009087")]
     public void IsValidSouthAfricanIdNumber_Valid13Digit_ReturnsTrue(string id)
         => Assert.IsTrue(_validator.IsValidSouthAfricanIdNumber(id));
