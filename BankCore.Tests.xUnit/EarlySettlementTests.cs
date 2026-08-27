@@ -6,7 +6,7 @@ using Moq;
 
 namespace BankCore.Tests.xUnit;
 
-/// <summary>TC-LOAN-006, 007</summary>
+/// <summary>Early-settlement calculations and state transition.</summary>
 public class EarlySettlementTests
 {
     private readonly Mock<ILoanRepository> _loanRepo = new();
@@ -15,13 +15,10 @@ public class EarlySettlementTests
     private readonly LoanService _svc;
 
     public EarlySettlementTests()
-    {
-        _svc = new LoanService(_loanRepo.Object, _accountRepo.Object, _audit.Object);
-    }
+        => _svc = new LoanService(_loanRepo.Object, _accountRepo.Object, _audit.Object);
 
-    /// <summary>TC-LOAN-006</summary>
     [Fact]
-    public void CalculateSettlementAmount_IncludesFee()
+    public void CalculateSettlementAmount_IncludesFeeOnOutstandingBalance()
     {
         var loan = new Loan
         {
@@ -33,12 +30,11 @@ public class EarlySettlementTests
         _loanRepo.Setup(r => r.GetByReference("LN-SET")).Returns(loan);
 
         var result = _svc.CalculateSettlementAmount("LN-SET");
+
         result.IsSuccess.Should().BeTrue(result.Message);
-        // BUG-012: fee on principal (1.5% of 100000) + outstanding 50000
-        result.Data.Should().Be(50_000m + 100_000m * 0.015m);
+        result.Data.Should().Be(50_750.00m);
     }
 
-    /// <summary>TC-LOAN-007</summary>
     [Fact]
     public void SettleLoan_ClosesLoan()
     {
@@ -53,6 +49,7 @@ public class EarlySettlementTests
         _loanRepo.Setup(r => r.Update(It.IsAny<Loan>()));
 
         var result = _svc.SettleLoan("LN-SET2", "teller1");
+
         result.IsSuccess.Should().BeTrue(result.Message);
         loan.Status.Should().Be(LoanStatus.Settled);
         loan.OutstandingBalance.Should().Be(0m);
