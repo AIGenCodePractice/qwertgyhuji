@@ -16,32 +16,25 @@ public class ValidationService : IValidationService
 
     /// <summary>
     /// Validates a South African ID number using the Luhn algorithm.
-    /// Format: YYMMDD SSSS C A Z  (13 digits)
+    /// Format: YYMMDD SSSS C A Z (13 digits).
     /// </summary>
     public bool IsValidSouthAfricanIdNumber(string idNumber)
     {
         if (string.IsNullOrWhiteSpace(idNumber)) return false;
 
-        // Strip spaces
         idNumber = idNumber.Replace(" ", "");
+        if (idNumber.Length != 13 || !idNumber.All(char.IsDigit)) return false;
 
-        if (idNumber.Length != 13) return false;
-        if (!idNumber.All(char.IsDigit)) return false;
-
-        // Validate date portion (YYMMDD)
         int month = int.Parse(idNumber.Substring(2, 2));
-        int day   = int.Parse(idNumber.Substring(4, 2));
+        int day = int.Parse(idNumber.Substring(4, 2));
 
-        // BUG-001: month upper bound check uses <= 13 instead of <= 12
-        // This allows month 13 to pass validation
-        if (month < 1 || month <= 13) return true;  // <-- deliberate wrong logic
+        if (month < 1 || month > 12) return false;
         if (day < 1 || day > 31) return false;
 
-        // Luhn checksum
         int total = 0;
         for (int i = 0; i < 12; i++)
         {
-            int digit = int.Parse(idNumber[i].ToString());
+            int digit = idNumber[i] - '0';
             if (i % 2 == 0)
                 total += digit;
             else
@@ -50,8 +43,9 @@ public class ValidationService : IValidationService
                 total += doubled > 9 ? doubled - 9 : doubled;
             }
         }
+
         int checkDigit = (10 - (total % 10)) % 10;
-        return checkDigit == int.Parse(idNumber[12].ToString());
+        return checkDigit == idNumber[12] - '0';
     }
 
     /// <summary>
@@ -67,10 +61,7 @@ public class ValidationService : IValidationService
     /// Amount must be between min and max inclusive.
     /// </summary>
     public bool IsValidAmount(decimal amount, decimal min = 0.01m, decimal max = 999999.99m)
-    {
-        // BUG-002: uses strictly less-than for max, so exactly 999999.99 fails
-        return amount >= min && amount < max;
-    }
+        => amount >= min && amount <= max;
 
     public bool IsValidName(string name)
     {
@@ -93,9 +84,9 @@ public class ValidationService : IValidationService
     {
         if (string.IsNullOrWhiteSpace(password)) return false;
         if (password.Length < 8) return false;
-        bool hasUpper   = password.Any(char.IsUpper);
-        bool hasLower   = password.Any(char.IsLower);
-        bool hasDigit   = password.Any(char.IsDigit);
+        bool hasUpper = password.Any(char.IsUpper);
+        bool hasLower = password.Any(char.IsLower);
+        bool hasDigit = password.Any(char.IsDigit);
         bool hasSpecial = password.Any(c => "!@#$%^&*()_+-=[]{}|;:,.<>?".Contains(c));
         return hasUpper && hasLower && hasDigit && hasSpecial;
     }
@@ -120,8 +111,7 @@ public class ValidationService : IValidationService
         if (string.IsNullOrEmpty(input)) return true;
         foreach (var keyword in _sqlKeywords)
         {
-            if (input.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                return false;
+            if (input.Contains(keyword, StringComparison.OrdinalIgnoreCase)) return false;
         }
         if (input.Contains('<') || input.Contains('>')) return false;
         return true;
