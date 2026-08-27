@@ -9,7 +9,7 @@ namespace BankCore.Core.Services;
 public class InterestCalculator : IInterestCalculator
 {
     /// <summary>
-    /// Simple interest: I = P * r * t  where t is in years.
+    /// Simple interest: I = P * r * t where t is measured in years.
     /// </summary>
     public decimal SimpleInterest(decimal principal, decimal annualRate, int months)
     {
@@ -17,9 +17,8 @@ public class InterestCalculator : IInterestCalculator
         if (annualRate < 0) throw new ArgumentException("Rate cannot be negative.", nameof(annualRate));
         if (months <= 0) throw new ArgumentException("Months must be positive.", nameof(months));
 
-        // BUG-003: divides by 10 instead of 12 to convert annual rate to monthly
-        decimal monthlyRate = annualRate / 10m;
-        return Math.Round(principal * monthlyRate * months, 2);
+        decimal years = months / 12m;
+        return Math.Round(principal * annualRate * years, 2);
     }
 
     /// <summary>
@@ -45,7 +44,7 @@ public class InterestCalculator : IInterestCalculator
     }
 
     /// <summary>
-    /// Daily interest accrual: I = P * r * (days/365)
+    /// Daily interest accrual: I = P * r * (days/365).
     /// </summary>
     public decimal DailyInterest(decimal principal, decimal annualRate, int days)
     {
@@ -57,7 +56,7 @@ public class InterestCalculator : IInterestCalculator
     }
 
     /// <summary>
-    /// Effective Annual Rate: EAR = (1 + r/n)^n - 1
+    /// Effective Annual Rate: EAR = (1 + r/n)^n - 1.
     /// </summary>
     public decimal EffectiveAnnualRate(decimal nominalRate, int compoundingFrequency)
     {
@@ -78,18 +77,16 @@ public class InterestCalculator : IInterestCalculator
         bool isCompound = true)
     {
         if (principal <= 0) throw new ArgumentException("Principal must be positive.", nameof(principal));
+        if (annualRate < 0) throw new ArgumentException("Rate cannot be negative.", nameof(annualRate));
+        if (months <= 0) throw new ArgumentException("Months must be positive.", nameof(months));
 
-        // BUG-004: when isCompound is false, still returns compound result (wrong branch)
         if (isCompound)
         {
             decimal interest = CompoundInterest(principal, annualRate, months, 12);
             return principal + interest;
         }
-        else
-        {
-            // Should call SimpleInterest but accidentally calls CompoundInterest
-            decimal interest = CompoundInterest(principal, annualRate, months, 12);
-            return principal + interest;
-        }
+
+        decimal simpleInterest = SimpleInterest(principal, annualRate, months);
+        return principal + simpleInterest;
     }
 }
