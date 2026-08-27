@@ -31,10 +31,8 @@ public class AccountService : IAccountService
     {
         if (!_validator.IsValidName(ownerName))
             return OperationResult<Account>.Failure("Invalid owner name.");
-
         if (!_validator.IsValidSouthAfricanIdNumber(ownerIdNumber))
             return OperationResult<Account>.Failure("Invalid South African ID number.");
-
         if (!_validator.IsValidBranchCode(branchCode))
             return OperationResult<Account>.Failure("Invalid branch code.");
 
@@ -138,8 +136,7 @@ public class AccountService : IAccountService
         if (!_validator.IsValidSouthAfricanIdNumber(idNumber))
             return OperationResult<List<Account>>.Failure("Invalid ID number.");
 
-        var accounts = _accountRepo.GetByOwnerIdNumber(idNumber);
-        return OperationResult<List<Account>>.Success(accounts);
+        return OperationResult<List<Account>>.Success(_accountRepo.GetByOwnerIdNumber(idNumber));
     }
 
     public OperationResult<bool> SetDormant(int accountId)
@@ -181,8 +178,5 @@ public class AccountService : IAccountService
         _ => 0m
     };
 
-    private static int _ => 0;
-
-    private string GenerateAccountNumber()
-        => "BC" + Interlocked.Increment(ref _accountCounter).ToString();
+    private string GenerateAccountNumber() => "BC" + Interlocked.Increment(ref _accountCounter).ToString();
 }
