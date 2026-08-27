@@ -19,8 +19,6 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
 {
     private readonly IInterestCalculator _calculator = fixture.Calculator;
 
-    // ==================== [Fact] Tests ====================
-
     [Fact]
     public void SimpleInterest_CalculatorExists_IsNotNull()
     {
@@ -28,23 +26,14 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     }
 
     [Fact]
-    public void SimpleInterest_BasicCalculation_ValidResult()
+    public void SimpleInterest_BasicCalculation_ReturnsFormulaResult()
     {
-        // Arrange
         const decimal principal = 1000m;
-        const decimal rate = 0.08m;  // 8%
+        const decimal rate = 0.08m;
         const int months = 12;
-
-        // Act
         var result = _calculator.SimpleInterest(principal, rate, months);
-
-        // Assert
-        Assert.True(result > 0, "Interest should be positive");
-        Assert.True(result < principal * 2, "Interest should not exceed principal");
+        result.Should().BeApproximately(80m, 0.01m);
     }
-
-    // ==================== [Theory] with [InlineData] ====================
-    // Testing simple interest across multiple scenarios
 
     [Theory]
     [InlineData(1000, 0.08, 12, 80)]
@@ -56,47 +45,37 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     public void SimpleInterest_VariousAmounts_CalculatesCorrectly(
         decimal principal, decimal rate, int months, decimal expected)
     {
-        // Act
         var result = _calculator.SimpleInterest(principal, rate, months);
-
-        // Assert
         result.Should().BeApproximately(expected, 0.01m);
     }
 
-    // ==================== [Theory] with [InlineData] for Compound Interest ====================
-
     [Theory]
-    [InlineData(1000, 0.08, 12, 1)]   // Annual compounding
-    [InlineData(1000, 0.08, 12, 2)]   // Semi-annual
-    [InlineData(1000, 0.08, 12, 4)]   // Quarterly
-    [InlineData(1000, 0.08, 12, 12)]  // Monthly
-    [InlineData(1000, 0.08, 12, 365)] // Daily
-    [InlineData(500, 0.05, 24, 12)]   // 500 @ 5% for 24 months, monthly compounding
-    [InlineData(2000, 0.10, 36, 4)]   // 2000 @ 10% for 36 months, quarterly
-    [InlineData(100, 0.02, 6, 1)]     // 100 @ 2% for 6 months, annual
-    [InlineData(5000, 0.15, 12, 12)]  // 5000 @ 15% for 12 months, monthly
+    [InlineData(1000, 0.08, 12, 1)]
+    [InlineData(1000, 0.08, 12, 2)]
+    [InlineData(1000, 0.08, 12, 4)]
+    [InlineData(1000, 0.08, 12, 12)]
+    [InlineData(1000, 0.08, 12, 365)]
+    [InlineData(500, 0.05, 24, 12)]
+    [InlineData(2000, 0.10, 36, 4)]
+    [InlineData(100, 0.02, 6, 1)]
+    [InlineData(5000, 0.15, 12, 12)]
     public void CompoundInterest_VariousFrequencies_CalculatesCorrectly(
         decimal principal, decimal rate, int months, int frequency)
     {
-        // Act
         var result = _calculator.CompoundInterest(principal, rate, months, frequency);
+        var years = months / 12.0;
+        var expected = Math.Round(
+            (decimal)(principal * (decimal)Math.Pow(1 + (double)rate / frequency, frequency * years) - principal),
+            2);
 
-        // Assert
-        result.Should().BeGreaterThanOrEqualTo(0);
-        // More frequent compounding should yield more interest
-        if (frequency > 1)
-        {
-            result.Should().BeGreaterThan(_calculator.CompoundInterest(principal, rate, months, 1));
-        }
+        result.Should().BeApproximately(expected, 0.01m);
     }
 
-    // ==================== [Theory] with [InlineData] for Daily Interest ====================
-
     [Theory]
-    [InlineData(1000, 0.08, 365)]  // Full year daily
-    [InlineData(1000, 0.08, 180)]  // Half year
-    [InlineData(1000, 0.08, 90)]   // Quarter year
-    [InlineData(1000, 0.08, 30)]   // One month
+    [InlineData(1000, 0.08, 365)]
+    [InlineData(1000, 0.08, 180)]
+    [InlineData(1000, 0.08, 90)]
+    [InlineData(1000, 0.08, 30)]
     [InlineData(500, 0.05, 365)]
     [InlineData(2000, 0.10, 365)]
     [InlineData(100, 0.01, 365)]
@@ -106,15 +85,10 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     public void DailyInterest_VariousPeriods_CalculatesCorrectly(
         decimal principal, decimal rate, int days)
     {
-        // Act
         var result = _calculator.DailyInterest(principal, rate, days);
-
-        // Assert
-        result.Should().BeGreaterThanOrEqualTo(0);
-        result.Should().BeLessThan(principal);
+        var expected = Math.Round(principal * rate * days / 365m, 2);
+        result.Should().BeApproximately(expected, 0.01m);
     }
-
-    // ==================== [Theory] with [InlineData] for Edge Cases ====================
 
     [Theory]
     [InlineData(0.00, "0% rate")]
@@ -122,10 +96,7 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     [InlineData(1.00, "100% rate")]
     public void CompoundInterest_BoundaryRates_HandlesCorrectly(decimal rate, string description)
     {
-        // Act
         var result = _calculator.CompoundInterest(1000, rate, 12, 12);
-
-        // Assert - Should not throw and should return valid result
         Assert.True(result >= 0, description);
         if (rate == 0)
         {
@@ -133,72 +104,46 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
         }
     }
 
-    // ==================== [Theory] with [MemberData] ====================
-    // Complex object-based test data for advanced scenarios
-
     [Theory]
     [MemberData(nameof(GetComplexInterestScenarios))]
     public void CompoundInterest_ComplexScenarios_WithMemberData(
         decimal principal, decimal rate, int months, int frequency, string scenarioName)
     {
-        // Act
         var result = _calculator.CompoundInterest(principal, rate, months, frequency);
+        var years = months / 12.0;
+        var expected = Math.Round(
+            (decimal)(principal * (decimal)Math.Pow(1 + (double)rate / frequency, frequency * years) - principal),
+            2);
 
-        // Assert
-        Assert.True(result >= 0, scenarioName);
-        Assert.True(result < principal * 10, $"{scenarioName}: result should remain within a reasonable range");
+        result.Should().BeApproximately(expected, 0.01m, scenarioName);
     }
 
     public static TheoryData<decimal, decimal, int, int, string> GetComplexInterestScenarios()
     {
         return new TheoryData<decimal, decimal, int, int, string>
         {
-            // Mortgage-like scenario: 200000 @ 5% over 360 months (30 years)
             { 200000m, 0.05m, 360, 12, "30-year mortgage" },
-
-            // Savings account: 10000 @ 3.5% over 60 months (5 years)
             { 10000m, 0.035m, 60, 12, "5-year savings" },
-
-            // High-yield savings: 5000 @ 4.5% over 12 months
             { 5000m, 0.045m, 12, 12, "1-year high-yield" },
-
-            // Investment account: 50000 @ 8% over 240 months (20 years)
             { 50000m, 0.08m, 240, 12, "20-year investment" },
-
-            // CD account with quarterly compounding: 15000 @ 2% over 24 months
             { 15000m, 0.02m, 24, 4, "2-year CD quarterly" }
         };
     }
-
-    // ==================== [Theory] with [ClassData] ====================
-    // Using a custom data source class
 
     [Theory]
     [ClassData(typeof(InterestBoundaryTestData))]
     public void DailyInterest_BoundaryData_WithClassData(decimal principal, decimal rate, int days)
     {
-        // Act
         var result = _calculator.DailyInterest(principal, rate, days);
-
-        // Assert
-        result.Should().BeGreaterThanOrEqualTo(0);
         var expected = principal * rate * (days / 365m);
         result.Should().BeApproximately(expected, 0.01m);
     }
 
-    // ==================== Precision and Leap Year Tests ====================
-
     [Fact]
     public void DailyInterest_LeapYearHandling_February29()
     {
-        // Test interest calculation across leap year (Feb 29 exists)
-        // Period: Jan 1 - Dec 31 (366 days in leap year)
-        // Act
         var result = _calculator.DailyInterest(1000m, 0.08m, 366);
-
-        // Assert
         Assert.True(result > 0);
-        // Should be slightly more than regular year
         var regularYear = _calculator.DailyInterest(1000m, 0.08m, 365);
         Assert.True(result > regularYear);
     }
@@ -206,10 +151,7 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     [Fact]
     public void SimpleInterest_PrecisionTo2Decimals_RoundCorrectly()
     {
-        // Act
         var result = _calculator.SimpleInterest(1000m, 0.0333m, 1);
-
-        // Assert - Result should be rounded to 2 decimals
         var decimalPlaces = BitConverter.GetBytes(decimal.GetBits(result)[3])[2];
         Assert.True(decimalPlaces <= 2, "Result should have max 2 decimal places");
     }
@@ -217,43 +159,32 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     [Fact]
     public void SimpleInterest_UsesCustomEqualityComparer_ForFinancialPrecision()
     {
+        const decimal expected = 850m;
         var result = _calculator.SimpleInterest(10000m, 0.085m, 12);
-        Assert.Equal(result, result, new DecimalPrecisionComparer(0.01m));
-        result.Should().BeApproximately(result, 0.01m);
+        Assert.Equal(expected, result, new DecimalPrecisionComparer(0.01m));
+        result.Should().BeApproximately(expected, 0.01m);
     }
 
     [Fact]
     public void EffectiveAnnualRate_ComparisonAcrossFrequencies_MonthlyVsDaily()
     {
-        // Arrange
         const decimal nominalRate = 0.08m;
-
-        // Act
         var monthlyEAR = _calculator.EffectiveAnnualRate(nominalRate, 12);
         var dailyEAR = _calculator.EffectiveAnnualRate(nominalRate, 365);
-
-        // Assert - More frequent compounding should yield higher EAR
         Assert.True(dailyEAR > monthlyEAR);
     }
 
     [Fact]
     public void FutureValue_SimpleVsCompound_CompoundHigher()
     {
-        // Arrange
         const decimal principal = 1000;
         const decimal rate = 0.08m;
         const int months = 12;
-
-        // Act
         var simpleResult = _calculator.FutureValue(principal, rate, months, isCompound: false);
         var compoundResult = _calculator.FutureValue(principal, rate, months, isCompound: true);
-
-        // Assert
         Assert.True(simpleResult > principal);
         Assert.True(compoundResult > principal);
     }
-
-    // ==================== Flexibility Tests ====================
 
     [Theory]
     [InlineData(1000, 0.05, 12)]
@@ -262,10 +193,7 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     public void CompoundInterest_MonthlyCompounding_AlwaysPositive(
         decimal principal, decimal rate, int months)
     {
-        // Act
         var result = _calculator.CompoundInterest(principal, rate, months, 12);
-
-        // Assert
         result.Should().BeGreaterThanOrEqualTo(0, "Interest should never be negative");
     }
 
@@ -276,11 +204,14 @@ public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixt
     public void CompoundInterest_WithCustomPrecisionComparer_ApproximatelyEqual(
         decimal principal, decimal rate, int months, int frequency)
     {
-        // Act
         var result = _calculator.CompoundInterest(principal, rate, months, frequency);
+        var years = months / 12.0;
+        var expected = Math.Round(
+            (decimal)(principal * (decimal)Math.Pow(1 + (double)rate / frequency, frequency * years) - principal),
+            2);
 
-        // Assert - Using custom precision for financial calculations
-        result.Should().BeApproximately(result, 0.01m);
+        Assert.Equal(expected, result, new DecimalPrecisionComparer(0.01m));
+        result.Should().BeApproximately(expected, 0.01m);
     }
 }
 
@@ -291,25 +222,12 @@ public class InterestBoundaryTestData : TheoryData<decimal, decimal, int>
 {
     public InterestBoundaryTestData()
     {
-        // Minimum principal
         Add(0.01m, 0.08m, 1);
-
-        // Maximum principal (practical limit)
         Add(999999.99m, 0.08m, 365);
-
-        // Zero rate
         Add(1000m, 0.00m, 365);
-
-        // Maximum rate (100%)
         Add(1000m, 1.00m, 365);
-
-        // Single day
         Add(1000m, 0.08m, 1);
-
-        // Full year
         Add(1000m, 0.08m, 365);
-
-        // Leap year
         Add(1000m, 0.08m, 366);
     }
 }
