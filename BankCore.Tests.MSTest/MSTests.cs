@@ -1,7 +1,7 @@
 ﻿namespace BankCore.Tests.MSTest;
 
 [TestClass]
-public sealed class Test1
+public sealed class MSTests
 {
     [TestMethod]
     public void TestMethod1()
