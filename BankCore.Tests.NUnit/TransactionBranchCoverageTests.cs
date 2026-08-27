@@ -73,6 +73,7 @@ public class TransactionBranchCoverageTests
         _accounts.Setup(r => r.GetById(2)).Returns(Account(2));
         Assert.That(_svc.Transfer(1, 2, 1m, "x", "u").IsSuccess, Is.False);
 
+        from.DailyWithdrawalLimit = 5000m;
         from.DailyWithdrawnToday = 0m;
         var to = Account(2, 100m);
         _accounts.Setup(r => r.GetById(2)).Returns(to);
