@@ -76,7 +76,7 @@ public class SessionTests
         var result = auth.ValidateSession(session.Token);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "inactive");
+        Assert.Contains(result.Message.ToLowerInvariant(), "session is inactive.");
     }
 
     [TestMethod]
@@ -89,7 +89,7 @@ public class SessionTests
         var result = auth.ValidateSession(session.Token);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "expired");
+        Assert.Contains(result.Message.ToLowerInvariant(), "session has expired.");
     }
 
     [TestMethod]
@@ -103,7 +103,7 @@ public class SessionTests
         var result = auth.ValidateSession(session.Token);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "expired");
+        Assert.Contains(result.Message.ToLowerInvariant(), "session has expired.");
     }
 
     [TestMethod]
@@ -119,7 +119,7 @@ public class SessionTests
 
         Assert.IsTrue(logout.IsSuccess);
         Assert.IsFalse(validate.IsSuccess);
-        Assert.Contains(validate.Message.ToLowerInvariant(), "inactive");
+        Assert.Contains(validate.Message.ToLowerInvariant(), "session is inactive.");
     }
 
     [TestMethod]
@@ -132,7 +132,7 @@ public class SessionTests
         var result = auth.ValidateSession("tok-unknown");
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid");
+        Assert.Contains(result.Message.ToLowerInvariant(), "invalid session.");
     }
 
     [TestMethod]
@@ -157,6 +157,6 @@ public class SessionTests
         var result = auth.Logout("tok-missing");
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "not found");
+        Assert.Contains(result.Message.ToLowerInvariant(), "session not found.");
     }
 }

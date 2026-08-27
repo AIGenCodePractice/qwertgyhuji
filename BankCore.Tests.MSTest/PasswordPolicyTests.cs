@@ -85,7 +85,7 @@ public class PasswordPolicyTests
             TestDataHelper.WeakPassword);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "complexity");
+        Assert.Contains(result.Message.ToLowerInvariant(), "new password does not meet complexity requirements.");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
@@ -100,7 +100,7 @@ public class PasswordPolicyTests
             TestDataHelper.MinLengthPassword);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "incorrect");
+        Assert.Contains(result.Message.ToLowerInvariant(), "current password is incorrect.");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
@@ -136,7 +136,7 @@ public class PasswordPolicyTests
             TestDataHelper.BelowMinPassword);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "complexity");
+        Assert.Contains(result.Message.ToLowerInvariant(), "new password does not meet complexity requirements.");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
@@ -163,7 +163,7 @@ public class PasswordPolicyTests
             TestDataHelper.MinLengthPassword);
 
         Assert.IsFalse(result.IsSuccess, $"Expected invalid session failure, got: {result.Message}");
-        Assert.Contains(result.Message.ToLowerInvariant(), "session");
+        Assert.Contains(result.Message.ToLowerInvariant(), "invalid session.");
         _mockUsers.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
