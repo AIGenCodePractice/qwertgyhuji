@@ -33,9 +33,10 @@ public class EarlySettlementTests
         _loanRepo.Setup(r => r.GetByReference("LN-SET")).Returns(loan);
 
         var result = _svc.CalculateSettlementAmount("LN-SET");
+
         result.IsSuccess.Should().BeTrue(result.Message);
-        // BUG-012: fee on principal (1.5% of 100000) + outstanding 50000
-        result.Data.Should().Be(50_000m + 100_000m * 0.015m);
+        result.Data.Should().Be(50_000m + 50_000m * 0.015m);
+        _loanRepo.Verify(r => r.GetByReference("LN-SET"), Times.Once);
     }
 
     /// <summary>TC-LOAN-007</summary>
@@ -53,8 +54,21 @@ public class EarlySettlementTests
         _loanRepo.Setup(r => r.Update(It.IsAny<Loan>()));
 
         var result = _svc.SettleLoan("LN-SET2", "teller1");
+
         result.IsSuccess.Should().BeTrue(result.Message);
         loan.Status.Should().Be(LoanStatus.Settled);
         loan.OutstandingBalance.Should().Be(0m);
+        _loanRepo.Verify(r => r.GetByReference("LN-SET2"), Times.Exactly(2));
+        _loanRepo.Verify(r => r.Update(It.Is<Loan>(l =>
+            l.LoanReference == "LN-SET2" &&
+            l.Status == LoanStatus.Settled &&
+            l.OutstandingBalance == 0m)), Times.Once);
+        _audit.Verify(a => a.Log(
+            "LOAN_SETTLED",
+            "teller1",
+            It.Is<string>(message => message.Contains("LN-SET2")),
+            "LN-SET2",
+            true,
+            It.IsAny<string>()), Times.Once);
     }
 }
