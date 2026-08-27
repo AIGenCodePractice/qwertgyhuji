@@ -24,7 +24,7 @@ public class InterestCalculationAuditTests
 
     [Fact]
     public void CompoundInterest_MonthlyAtEightPercent_ReturnsExpectedInterest()
-        => _calculator.CompoundInterest(1000m, 0.08m, 12, 12).Should().BeApproximately(82.93m, 0.01m);
+        => _calculator.CompoundInterest(1000m, 0.08m, 12, 12).Should().BeApproximately(82.99m, 0.01m);
 
     [Fact]
     public void FutureValue_SimpleBranch_ReturnsPrincipalPlusSimpleInterest()
