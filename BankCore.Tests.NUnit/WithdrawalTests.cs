@@ -22,7 +22,6 @@ public class WithdrawalTests
     [OneTimeSetUp]
     public void OneTimeSetUp()
     {
-        // Shared expensive seeding placeholder (accounts would be loaded once in integration runs)
         TestContext.Progress.WriteLine("WithdrawalTests OneTimeSetUp");
     }
 
@@ -136,7 +135,7 @@ public class WithdrawalTests
     }
 
     [Test]
-    [CancelAfter(2000)]
+    [Timeout(2000)]
     [Category("Performance")]
     public void Withdraw_CompletesWithinTimeout()
     {
@@ -145,26 +144,14 @@ public class WithdrawalTests
         Assert.That(_account.Balance, Is.InRange(0m, 1000m));
     }
 
-    /// <summary>Demonstrates [Retry] for a timing-sensitive-style operation (Phase 3 req).</summary>
-    [Test]
-    [Retry(3)]
-    [Category("Critical")]
-    public void Withdraw_WithRetry_Succeeds()
-    {
-        _account.Balance = 100m;
-        var result = _svc.Withdraw(1, 10m, "retry", "teller1");
-        Assert.That(result.IsSuccess, Is.True, result.Message);
-    }
-
-    /// <summary>Assert.Multiple + Throws.TypeOf (Phase 3 NUnit requirements).</summary>
+    /// <summary>Assert.Multiple validates independent outcomes of one withdrawal.</summary>
     [Test]
     [Category("Critical")]
-    public void Withdraw_MultipleAssertsAndThrowsDemo()
+    public void Withdraw_MultipleAsserts_ValidatesCompletedWithdrawal()
     {
         _account.Balance = 500m;
         var result = _svc.Withdraw(1, 50m, "multi", "teller1");
 
-        // global:: avoids namespace clash under BankCore.Tests.NUnit
         Assert.Multiple((global::System.Action)(() =>
         {
             Assert.That(result.IsSuccess, Is.True);
@@ -172,9 +159,20 @@ public class WithdrawalTests
             Assert.That(result.Data!.Amount, Is.EqualTo(50m));
             Assert.That(_account.Balance, Is.EqualTo(450m));
         }));
+    }
 
-        // Explicit TestDelegate disambiguates NUnit 4 Assert.Throws overloads (CS0121)
-        Assert.Throws<InvalidOperationException>((TestDelegate)(() =>
-            throw new InvalidOperationException("demo")));
+    [Test]
+    [Category("Negative")]
+    public void Withdraw_PersistenceFailure_ThrowsConfiguredRepositoryException()
+    {
+        _txnRepo
+            .Setup(r => r.Add(It.IsAny<Transaction>()))
+            .Throws(new InvalidOperationException("Simulated transaction repository failure."));
+
+        Assert.That(
+            () => _svc.Withdraw(1, 50m, "Persistence failure", "teller1"),
+            Throws.TypeOf<InvalidOperationException>());
+
+        _txnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
 }
