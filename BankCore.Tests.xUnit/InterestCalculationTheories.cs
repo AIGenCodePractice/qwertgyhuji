@@ -1,6 +1,5 @@
 using Xunit;
 using BankCore.Core.Interfaces;
-using BankCore.Core.Services;
 using FluentAssertions;
 
 namespace BankCore.Tests.xUnit;
@@ -16,16 +15,9 @@ namespace BankCore.Tests.xUnit;
 /// - Custom IEqualityComparer for financial precision
 /// - FluentAssertions with financial precision validation
 /// </summary>
-public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
+public class InterestCalculationTheories(CalculatorFixture fixture) : IClassFixture<CalculatorFixture>
 {
-    private readonly CalculatorFixture _fixture;
-    private readonly IInterestCalculator _calculator;
-
-    public InterestCalculationTheories(CalculatorFixture fixture)
-    {
-        _fixture = fixture;
-        _calculator = fixture.Calculator;
-    }
+    private readonly IInterestCalculator _calculator = fixture.Calculator;
 
     // ==================== [Fact] Tests ====================
 
@@ -52,28 +44,26 @@ public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
     }
 
     // ==================== [Theory] with [InlineData] ====================
-    // Testing simple interest across multiple scenarios (12 tests)
+    // Testing simple interest across multiple scenarios
 
     [Theory]
-    [InlineData(1000, 0.08, 12, 960)]
-    [InlineData(500, 0.05, 6, 150)]
-    [InlineData(2000, 0.10, 24, 4000)]
-    [InlineData(100, 0.01, 1, 10)]
-    [InlineData(5000, 0.12, 12, 6000)]
-    [InlineData(750, 0.06, 18, 810)]
+    [InlineData(1000, 0.08, 12, 80)]
+    [InlineData(500, 0.05, 6, 12.50)]
+    [InlineData(2000, 0.10, 24, 400)]
+    [InlineData(100, 0.01, 1, 0.08)]
+    [InlineData(5000, 0.12, 12, 600)]
+    [InlineData(750, 0.06, 18, 67.50)]
     public void SimpleInterest_VariousAmounts_CalculatesCorrectly(
-        decimal principal, decimal rate, int months, decimal expectedApprox)
+        decimal principal, decimal rate, int months, decimal expected)
     {
         // Act
         var result = _calculator.SimpleInterest(principal, rate, months);
 
-        // Assert - Allow for rounding differences
-        result.Should().BeGreaterThan(0);
-        result.Should().BeLessThan(principal * 3);
+        // Assert
+        result.Should().BeApproximately(expected, 0.01m);
     }
 
     // ==================== [Theory] with [InlineData] for Compound Interest ====================
-    // Testing compound interest with various compounding frequencies (18 tests)
 
     [Theory]
     [InlineData(1000, 0.08, 12, 1)]   // Annual compounding
@@ -101,7 +91,6 @@ public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
     }
 
     // ==================== [Theory] with [InlineData] for Daily Interest ====================
-    // Testing daily interest calculation (10 tests)
 
     [Theory]
     [InlineData(1000, 0.08, 365)]  // Full year daily
@@ -137,14 +126,10 @@ public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
         var result = _calculator.CompoundInterest(1000, rate, 12, 12);
 
         // Assert - Should not throw and should return valid result
-        Assert.NotNull(result);
+        Assert.True(result >= 0, description);
         if (rate == 0)
         {
             Assert.Equal(0, result);
-        }
-        else
-        {
-            Assert.True(result >= 0);
         }
     }
 
@@ -160,27 +145,29 @@ public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
         var result = _calculator.CompoundInterest(principal, rate, months, frequency);
 
         // Assert
-        // decimal has no NaN; assert non-negative finite result
-        result.Should().BeGreaterThanOrEqualTo(0);
-        result.Should().BeLessThan(principal * 10); // Sanity check
+        Assert.True(result >= 0, scenarioName);
+        Assert.True(result < principal * 10, $"{scenarioName}: result should remain within a reasonable range");
     }
 
-    public static IEnumerable<object[]> GetComplexInterestScenarios()
+    public static TheoryData<decimal, decimal, int, int, string> GetComplexInterestScenarios()
     {
-        // Mortgage-like scenario: 200000 @ 5% over 360 months (30 years)
-        yield return new object[] { 200000m, 0.05m, 360, 12, "30-year mortgage" };
+        return new TheoryData<decimal, decimal, int, int, string>
+        {
+            // Mortgage-like scenario: 200000 @ 5% over 360 months (30 years)
+            { 200000m, 0.05m, 360, 12, "30-year mortgage" },
 
-        // Savings account: 10000 @ 3.5% over 60 months (5 years)
-        yield return new object[] { 10000m, 0.035m, 60, 12, "5-year savings" };
+            // Savings account: 10000 @ 3.5% over 60 months (5 years)
+            { 10000m, 0.035m, 60, 12, "5-year savings" },
 
-        // High-yield savings: 5000 @ 4.5% over 12 months
-        yield return new object[] { 5000m, 0.045m, 12, 12, "1-year high-yield" };
+            // High-yield savings: 5000 @ 4.5% over 12 months
+            { 5000m, 0.045m, 12, 12, "1-year high-yield" },
 
-        // Investment account: 50000 @ 8% over 240 months (20 years)
-        yield return new object[] { 50000m, 0.08m, 240, 12, "20-year investment" };
+            // Investment account: 50000 @ 8% over 240 months (20 years)
+            { 50000m, 0.08m, 240, 12, "20-year investment" },
 
-        // CD account with quarterly compounding: 15000 @ 2% over 24 months
-        yield return new object[] { 15000m, 0.02m, 24, 4, "2-year CD quarterly" };
+            // CD account with quarterly compounding: 15000 @ 2% over 24 months
+            { 15000m, 0.02m, 24, 4, "2-year CD quarterly" }
+        };
     }
 
     // ==================== [Theory] with [ClassData] ====================
@@ -262,7 +249,6 @@ public class InterestCalculationTheories : IClassFixture<CalculatorFixture>
         var compoundResult = _calculator.FutureValue(principal, rate, months, isCompound: true);
 
         // Assert
-        // Both should be positive (though buggy code may make them equal)
         Assert.True(simpleResult > principal);
         Assert.True(compoundResult > principal);
     }
