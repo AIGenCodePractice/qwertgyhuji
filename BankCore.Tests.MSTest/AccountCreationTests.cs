@@ -97,8 +97,8 @@ public class AccountCreationTests
         Assert.IsTrue(first.IsSuccess && second.IsSuccess);
         Assert.IsNotNull(first.Data);
         Assert.IsNotNull(second.Data);
-        Assert.StartsWith(first.Data.AccountNumber, "BC");
-        Assert.StartsWith(second.Data.AccountNumber, "BC");
+        Assert.StartsWith("BC", first.Data.AccountNumber);
+        Assert.StartsWith("BC", second.Data.AccountNumber);
         Assert.AreNotEqual(first.Data.AccountNumber, second.Data.AccountNumber);
     }
 
