@@ -71,9 +71,9 @@ public class AccountQueryTests
 
         Assert.IsTrue(result.IsSuccess);
         Assert.IsNotNull(result.Data);
-        Assert.AreEqual(2, result.Data.Count);
-        CollectionAssert.Contains(result.Data.Select(a => a.Id).ToList(), 1);
-        CollectionAssert.Contains(result.Data.Select(a => a.Id).ToList(), 2);
+        Assert.HasCount(2, result.Data);
+        Assert.IsTrue(result.Data.Exists(a => a.Id == 1));
+        Assert.IsTrue(result.Data.Exists(a => a.Id == 2));
     }
 
     [TestMethod]
