@@ -44,10 +44,11 @@ public class ValidationBranchCoverageTests
     [DataRow(100.00)]
     [DataRow(999999.99)]
     [DataRow(1000000.00)]
-    public void Amount_CoversInclusiveBoundaries(decimal amount)
+    public void Amount_CoversInclusiveBoundaries(double amount)
     {
-        var expected = amount >= 0.01m && amount <= 999999.99m;
-        Assert.AreEqual(expected, _validation.IsValidAmount(amount));
+        var decimalAmount = (decimal)amount;
+        var expected = decimalAmount >= 0.01m && decimalAmount <= 999999.99m;
+        Assert.AreEqual(expected, _validation.IsValidAmount(decimalAmount));
     }
 
     [TestMethod]
