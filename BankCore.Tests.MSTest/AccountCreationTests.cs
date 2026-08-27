@@ -55,20 +55,21 @@ public class AccountCreationTests
     }
 
     [TestMethod]
-    [DataRow("Savings", 99.99)]
-    [DataRow("Current", 499.99)]
-    [DataRow("FixedDeposit", 999.99)]
-    [DataRow("Notice", 499.99)]
+    [DataRow("Savings", 99.99, 100.00)]
+    [DataRow("Current", 499.99, 500.00)]
+    [DataRow("FixedDeposit", 999.99, 1000.00)]
+    [DataRow("Notice", 499.99, 500.00)]
     [TestCategory("Boundary")]
     [TestCategory("Negative")]
-    public void CreateAccount_JustBelowTypeMinimum_Fails(string typeName, double amount)
+    public void CreateAccount_JustBelowTypeMinimum_Fails(string typeName, double amount, double minimum)
     {
         var type = Enum.Parse<AccountType>(typeName);
         var result = _service.CreateAccount("Alice Smith", TestDataHelper.ValidIdNumber,
             type, (decimal)amount, TestDataHelper.ValidBranchCode);
 
+        var expectedMessage = $"Minimum opening deposit for {type} account is R{(decimal)minimum:F2}.";
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message, "Minimum");
+        Assert.AreEqual(expectedMessage, result.Message);
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Never);
     }
 
