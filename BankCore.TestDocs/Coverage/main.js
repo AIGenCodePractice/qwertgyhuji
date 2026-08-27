@@ -301,13 +301,13 @@ var assemblies = [
       { "name": "BankCore.Core.Models.User", "rp": "BankCore.Core_User.html", "cl": 10, "ucl": 0, "cal": 10, "tl": 144, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "BankCore.Core.Services.AccountService", "rp": "BankCore.Core_AccountService.html", "cl": 125, "ucl": 4, "cal": 129, "tl": 182, "cb": 45, "tb": 52, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "BankCore.Core.Services.AuditService", "rp": "BankCore.Core_AuditService.html", "cl": 0, "ucl": 17, "cal": 17, "tl": 57, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "BankCore.Core.Services.AuthService", "rp": "BankCore.Core_AuthService.html", "cl": 130, "ucl": 46, "cal": 176, "tl": 251, "cb": 40, "tb": 58, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "BankCore.Core.Services.InterestCalculator", "rp": "BankCore.Core_InterestCalculator.html", "cl": 45, "ucl": 1, "cal": 46, "tl": 92, "cb": 21, "tb": 32, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "BankCore.Core.Services.LoanService", "rp": "BankCore.Core_LoanService.html", "cl": 141, "ucl": 26, "cal": 167, "tl": 221, "cb": 47, "tb": 72, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "BankCore.Core.Services.AuthService", "rp": "BankCore.Core_AuthService.html", "cl": 176, "ucl": 0, "cal": 176, "tl": 251, "cb": 56, "tb": 58, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "BankCore.Core.Services.InterestCalculator", "rp": "BankCore.Core_InterestCalculator.html", "cl": 46, "ucl": 0, "cal": 46, "tl": 92, "cb": 29, "tb": 32, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "BankCore.Core.Services.LoanService", "rp": "BankCore.Core_LoanService.html", "cl": 160, "ucl": 7, "cal": 167, "tl": 221, "cb": 65, "tb": 72, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "BankCore.Core.Services.PasswordHasher", "rp": "BankCore.Core_PasswordHasher.html", "cl": 0, "ucl": 16, "cal": 16, "tl": 57, "cb": 0, "tb": 0, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
       { "name": "BankCore.Core.Services.ReportingService", "rp": "BankCore.Core_ReportingService.html", "cl": 66, "ucl": 2, "cal": 68, "tl": 107, "cb": 12, "tb": 20, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "BankCore.Core.Services.TransactionService", "rp": "BankCore.Core_TransactionService.html", "cl": 127, "ucl": 29, "cal": 156, "tl": 209, "cb": 40, "tb": 64, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
-      { "name": "BankCore.Core.Services.ValidationService", "rp": "BankCore.Core_ValidationService.html", "cl": 63, "ucl": 5, "cal": 68, "tl": 119, "cb": 38, "tb": 54, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "BankCore.Core.Services.TransactionService", "rp": "BankCore.Core_TransactionService.html", "cl": 152, "ucl": 4, "cal": 156, "tl": 209, "cb": 59, "tb": 64, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
+      { "name": "BankCore.Core.Services.ValidationService", "rp": "BankCore.Core_ValidationService.html", "cl": 68, "ucl": 0, "cal": 68, "tl": 119, "cb": 53, "tb": 54, "cm": 0, "fcm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "mfch": [], "hc": [], "metrics": { } },
     ]},
   {
     "name": "BankCore.Data",
@@ -333,45 +333,21 @@ var riskHotspotMetrics = [
 
 var riskHotspots = [
   {
-    "assembly": "BankCore.Core", "class": "BankCore.Core.Services.AuthService", "reportPath": "BankCore.Core_AuthService.html", "methodName": "RegisterUser(System.String,System.String,BankCore.Core.Models.UserRole,System.String)", "methodShortName": "RegisterUser(...)", "fileIndex": 0, "line": 190,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
-    "assembly": "BankCore.Core", "class": "BankCore.Core.Services.TransactionService", "reportPath": "BankCore.Core_TransactionService.html", "methodName": "GetTransactionHistory(System.Int32,System.Nullable\u00601\u003CSystem.DateTime\u003E,System.Nullable\u00601\u003CSystem.DateTime\u003E)", "methodShortName": "GetTransactionHistory(...)", "fileIndex": 0, "line": 182,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
-    "assembly": "BankCore.Core", "class": "BankCore.Core.Services.ValidationService", "reportPath": "BankCore.Core_ValidationService.html", "methodName": "IsValidUsername(System.String)", "methodShortName": "IsValidUsername(...)", "fileIndex": 0, "line": 74,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
-    ]},
-  {
     "assembly": "BankCore.Data", "class": "BankCore.Data.Repositories.InMemoryTransactionRepository", "reportPath": "BankCore.Data_InMemoryTransactionRepository.html", "methodName": "GetByDateRange(System.Int32,System.DateTime,System.DateTime)", "methodShortName": "GetByDateRange(...)", "fileIndex": 0, "line": 44,
     "metrics": [
       { "value": 42, "exceeded": true },
       { "value": 6, "exceeded": false },
     ]},
   {
-    "assembly": "BankCore.Core", "class": "BankCore.Core.Services.LoanService", "reportPath": "BankCore.Core_LoanService.html", "methodName": "ProcessRepayment(System.String,System.Decimal,System.String)", "methodShortName": "ProcessRepayment(...)", "fileIndex": 0, "line": 124,
-    "metrics": [
-      { "value": 33, "exceeded": true },
-      { "value": 14, "exceeded": false },
-    ]},
-  {
     "assembly": "BankCore.Core", "class": "BankCore.Core.Services.LoanService", "reportPath": "BankCore.Core_LoanService.html", "methodName": "ApplyForLoan(System.Int32,BankCore.Core.Models.LoanType,System.Decimal,System.Int32,System.Decimal,System.Decimal,System.Decimal,System.Int32)", "methodShortName": "ApplyForLoan(...)", "fileIndex": 0, "line": 29,
     "metrics": [
-      { "value": 23, "exceeded": false },
+      { "value": 22, "exceeded": false },
       { "value": 22, "exceeded": true },
     ]},
   {
     "assembly": "BankCore.Core", "class": "BankCore.Core.Services.TransactionService", "reportPath": "BankCore.Core_TransactionService.html", "methodName": "ReverseTransaction(System.String,System.String,System.String)", "methodShortName": "ReverseTransaction(...)", "fileIndex": 0, "line": 134,
     "metrics": [
-      { "value": 25, "exceeded": false },
+      { "value": 20, "exceeded": false },
       { "value": 20, "exceeded": true },
     ]},
   {
@@ -389,13 +365,13 @@ var riskHotspots = [
   {
     "assembly": "BankCore.Core", "class": "BankCore.Core.Services.TransactionService", "reportPath": "BankCore.Core_TransactionService.html", "methodName": "Transfer(System.Int32,System.Int32,System.Decimal,System.String,System.String)", "methodShortName": "Transfer(...)", "fileIndex": 0, "line": 89,
     "metrics": [
-      { "value": 20, "exceeded": false },
+      { "value": 18, "exceeded": false },
       { "value": 18, "exceeded": true },
     ]},
   {
     "assembly": "BankCore.Core", "class": "BankCore.Core.Services.AuthService", "reportPath": "BankCore.Core_AuthService.html", "methodName": "Login(System.String,System.String)", "methodShortName": "Login(...)", "fileIndex": 0, "line": 61,
     "metrics": [
-      { "value": 19, "exceeded": false },
+      { "value": 16, "exceeded": false },
       { "value": 16, "exceeded": true },
     ]},
 ];
