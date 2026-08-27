@@ -18,10 +18,10 @@ public class DepositTests
     private Account _testAccount = null!;
 
     [OneTimeSetUp]
-    public void OneTimeSetup() => TestContext.WriteLine("OneTimeSetUp: Initializing test fixtures");
+    public void OneTimeSetup() => TestContext.Out.WriteLine("OneTimeSetUp: Initializing test fixtures");
 
     [OneTimeTearDown]
-    public void OneTimeTearDown() => TestContext.WriteLine("OneTimeTearDown: Cleaning up shared resources");
+    public void OneTimeTearDown() => TestContext.Out.WriteLine("OneTimeTearDown: Cleaning up shared resources");
 
     [SetUp]
     public void Setup()
@@ -48,9 +48,6 @@ public class DepositTests
         _mockAccountRepo.Setup(r => r.GetById(1)).Returns(_testAccount);
         _transactionService = new TransactionService(_mockAccountRepo.Object, _mockTxnRepo.Object, _mockValidator.Object, _mockAudit.Object);
     }
-
-    [TearDown]
-    public void Teardown() { }
 
     [Test]
     [Category("Critical")]
@@ -118,7 +115,7 @@ public class DepositTests
 
     [Test]
     [Category("Performance")]
-    [Timeout(2000)]
+    [CancelAfter(2000)]
     public void Deposit_PerformanceTest_1000SequentialOperationsCompleteWithin2Seconds()
     {
         var stopwatch = Stopwatch.StartNew();
@@ -134,7 +131,7 @@ public class DepositTests
     [Test]
     [Category("Performance")]
     [Retry(3)]
-    [Timeout(2000)]
+    [CancelAfter(2000)]
     public void Deposit_PerformanceMeasurement_TimingSensitiveOperationMeetsThreshold()
     {
         var stopwatch = Stopwatch.StartNew();
@@ -153,7 +150,8 @@ public class DepositTests
     {
         _mockTxnRepo.Setup(r => r.Add(It.IsAny<Transaction>()))
             .Throws(new InvalidOperationException("Simulated transaction repository failure."));
-        Assert.That(() => _transactionService.Deposit(1, 500m, "Persistence failure", "TELLER01"),
+
+        Assert.That((TestDelegate)(() => _transactionService.Deposit(1, 500m, "Persistence failure", "TELLER01")),
             Throws.TypeOf<InvalidOperationException>());
         _mockTxnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
