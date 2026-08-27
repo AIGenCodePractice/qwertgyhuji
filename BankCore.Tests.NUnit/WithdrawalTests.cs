@@ -16,10 +16,10 @@ public class WithdrawalTests
     private Account _account = null!;
 
     [OneTimeSetUp]
-    public void OneTimeSetUp() => TestContext.Progress.WriteLine("WithdrawalTests OneTimeSetUp");
+    public void OneTimeSetUp() => TestContext.Out.WriteLine("WithdrawalTests OneTimeSetUp");
 
     [OneTimeTearDown]
-    public void OneTimeTearDown() => TestContext.Progress.WriteLine("WithdrawalTests OneTimeTearDown");
+    public void OneTimeTearDown() => TestContext.Out.WriteLine("WithdrawalTests OneTimeTearDown");
 
     [SetUp]
     public void SetUp()
@@ -45,9 +45,6 @@ public class WithdrawalTests
         _txnRepo.Setup(r => r.ReferenceExists(It.IsAny<string>())).Returns(false);
         _svc = new TransactionService(_accountRepo.Object, _txnRepo.Object, _validator.Object, _audit.Object);
     }
-
-    [TearDown]
-    public void TearDown() { }
 
     [Test]
     [Category("Critical")]
@@ -134,7 +131,7 @@ public class WithdrawalTests
     }
 
     [Test]
-    [Timeout(2000)]
+    [CancelAfter(2000)]
     [Category("Performance")]
     public void Withdraw_CompletesWithinTimeout()
     {
@@ -168,7 +165,7 @@ public class WithdrawalTests
         _txnRepo.Setup(r => r.Add(It.IsAny<Transaction>()))
             .Throws(new InvalidOperationException("Simulated transaction repository failure."));
 
-        Assert.That(() => _svc.Withdraw(1, 50m, "Persistence failure", "teller1"),
+        Assert.That((TestDelegate)(() => _svc.Withdraw(1, 50m, "Persistence failure", "teller1")),
             Throws.TypeOf<InvalidOperationException>());
         _txnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
