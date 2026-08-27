@@ -88,7 +88,7 @@ public class LoginTests
         var result = auth.Login("jdoe", wrongCase);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid");
+        Assert.Contains(result.Message.ToLowerInvariant(), "invalid");
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
@@ -103,7 +103,7 @@ public class LoginTests
         // Still locked — should fail
         var lockedResult = auth.Login("locked_user", TestDataHelper.ValidPassword);
         Assert.IsFalse(lockedResult.IsSuccess);
-        StringAssert.Contains(lockedResult.Message.ToLowerInvariant(), "locked");
+        Assert.Contains(lockedResult.Message.ToLowerInvariant(), "locked");
 
         // Admin unlock
         var unlock = auth.UnlockUser("locked_user", "admin1");
@@ -128,7 +128,7 @@ public class LoginTests
         var result = auth.Login("jdoe", "WrongP@ss99");
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid");
+        Assert.Contains(result.Message.ToLowerInvariant(), "invalid");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Once); // failed attempt recorded
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
@@ -144,7 +144,7 @@ public class LoginTests
         var result = auth.Login("nobody", TestDataHelper.ValidPassword);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid");
+        Assert.Contains(result.Message.ToLowerInvariant(), "invalid");
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
@@ -159,7 +159,7 @@ public class LoginTests
         var result = auth.Login("locked_user", TestDataHelper.ValidPassword);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "locked");
+        Assert.Contains(result.Message.ToLowerInvariant(), "locked");
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 

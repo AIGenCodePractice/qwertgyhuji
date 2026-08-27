@@ -68,7 +68,7 @@ public class AccountCreationTests
             type, (decimal)amount, TestDataHelper.ValidBranchCode);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message, "Minimum");
+        Assert.Contains(result.Message, "Minimum");
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Never);
     }
 
@@ -94,7 +94,7 @@ public class AccountCreationTests
             AccountType.Savings, 500m, TestDataHelper.ValidBranchCode);
 
         Assert.IsTrue(first.IsSuccess && second.IsSuccess);
-        StringAssert.StartsWith(first.Data!.AccountNumber, "BC");
+        Assert.StartsWith(first.Data!.AccountNumber, "BC");
         Assert.AreNotEqual(first.Data.AccountNumber, second.Data!.AccountNumber);
     }
 
@@ -130,7 +130,7 @@ public class AccountCreationTests
             AccountType.Savings, 500m, "bad");
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "branch");
+        Assert.Contains(result.Message.ToLowerInvariant(), "branch");
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Never);
     }
 
@@ -143,7 +143,7 @@ public class AccountCreationTests
             AccountType.Savings, 500m, TestDataHelper.ValidBranchCode);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "id");
+        Assert.Contains(result.Message.ToLowerInvariant(), "id");
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Never);
     }
 

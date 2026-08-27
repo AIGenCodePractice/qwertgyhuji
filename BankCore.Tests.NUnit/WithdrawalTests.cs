@@ -165,7 +165,7 @@ public class WithdrawalTests
         _txnRepo.Setup(r => r.Add(It.IsAny<Transaction>()))
             .Throws(new InvalidOperationException("Simulated transaction repository failure."));
 
-        Assert.That((TestDelegate)(() => _svc.Withdraw(1, 50m, "Persistence failure", "teller1")),
+        Assert.That((Action)(() => _svc.Withdraw(1, 50m, "Persistence failure", "teller1")),
             Throws.TypeOf<InvalidOperationException>());
         _txnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }

@@ -8,7 +8,7 @@ public class ValidationBranchCoverageTests
 {
     private readonly ValidationService _validation = new();
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("")]
     [DataRow("123")]
@@ -26,7 +26,7 @@ public class ValidationBranchCoverageTests
         Assert.IsTrue(_validation.IsValidSouthAfricanIdNumber("800101 5009 087"));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("")]
     [DataRow("BC123")]
@@ -37,7 +37,7 @@ public class ValidationBranchCoverageTests
         Assert.IsFalse(_validation.IsValidAccountNumber(value!));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(0.00)]
     [DataRow(0.009)]
     [DataRow(0.01)]
@@ -50,7 +50,7 @@ public class ValidationBranchCoverageTests
         Assert.AreEqual(expected, _validation.IsValidAmount(amount));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("A")]
     [DataRow("ThisNameContains123")]
@@ -62,7 +62,7 @@ public class ValidationBranchCoverageTests
         if (name is "Jane Doe" or "O'Connor-Smith") Assert.IsTrue(result); else Assert.IsFalse(result);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("abc")]
     [DataRow("abcdefghijklmnopqrstu")]
@@ -74,7 +74,7 @@ public class ValidationBranchCoverageTests
         if (username == "valid.user_1") Assert.IsTrue(result); else Assert.IsFalse(result);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("short")]
     [DataRow("alllowercase1!")]
@@ -88,7 +88,7 @@ public class ValidationBranchCoverageTests
         Assert.AreEqual(password == "GoodPass1!", result);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("12345")]
     [DataRow("123456")]
@@ -98,7 +98,7 @@ public class ValidationBranchCoverageTests
         Assert.AreEqual(branch == "123456", _validation.IsValidBranchCode(branch!));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(null)]
     [DataRow("missing-at.example.com")]
     [DataRow("user@localhost")]
@@ -108,7 +108,7 @@ public class ValidationBranchCoverageTests
         Assert.AreEqual(email == "user@example.com", _validation.IsValidEmail(email!));
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("")]
     [DataRow("Normal input")]
     [DataRow("SELECT * FROM users")]

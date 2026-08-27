@@ -52,7 +52,7 @@ public class AccountUpdateTests
         var result = service.UpdateAccount(999, "New Name", TestDataHelper.ValidBranchCode);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message, "not found");
+        Assert.Contains(result.Message, "not found");
         _mockRepo!.Verify(r => r.Update(It.IsAny<Account>()), Times.Never);
     }
 
@@ -120,7 +120,7 @@ public class AccountUpdateTests
         var result = service.UpdateAccount(5, "Someone", TestDataHelper.ValidBranchCode);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "closed");
+        Assert.Contains(result.Message.ToLowerInvariant(), "closed");
         _mockRepo!.Verify(r => r.Update(It.IsAny<Account>()), Times.Never);
     }
 
@@ -135,7 +135,7 @@ public class AccountUpdateTests
         var result = service.UpdateAccount(1, "", TestDataHelper.ValidBranchCode);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "name");
+        Assert.Contains(result.Message.ToLowerInvariant(), "name");
     }
 
     [TestMethod]
@@ -148,6 +148,6 @@ public class AccountUpdateTests
         var result = service.SetDormant(3);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "active");
+        Assert.Contains(result.Message.ToLowerInvariant(), "active");
     }
 }

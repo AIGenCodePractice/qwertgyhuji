@@ -101,7 +101,7 @@ public class AccountQueryTests
         var result = _service.GetAccount(999);
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message, "not found");
+        Assert.Contains(result.Message, "not found");
     }
 
     [TestMethod]
@@ -115,7 +115,7 @@ public class AccountQueryTests
         var result = _service.GetAccountByNumber("BAD");
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid");
+        Assert.Contains(result.Message.ToLowerInvariant(), "invalid");
     }
 
     [TestMethod]
@@ -129,6 +129,6 @@ public class AccountQueryTests
         var result = _service.GetAccountsByOwner("123");
 
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "id");
+        Assert.Contains(result.Message.ToLowerInvariant(), "id");
     }
 }

@@ -151,7 +151,7 @@ public class DepositTests
         _mockTxnRepo.Setup(r => r.Add(It.IsAny<Transaction>()))
             .Throws(new InvalidOperationException("Simulated transaction repository failure."));
 
-        Assert.That((TestDelegate)(() => _transactionService.Deposit(1, 500m, "Persistence failure", "TELLER01")),
+        Assert.That((Action)(() => _transactionService.Deposit(1, 500m, "Persistence failure", "TELLER01")),
             Throws.TypeOf<InvalidOperationException>());
         _mockTxnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
