@@ -18,13 +18,13 @@ public class AccountService : IAccountService
         IValidationService validator, IAuditService audit)
     {
         _accountRepo = accountRepo;
-        _validator   = validator;
-        _audit       = audit;
+        _validator = validator;
+        _audit = audit;
     }
 
     /// <summary>
     /// Creates a new bank account with an initial deposit.
-    /// Minimum deposits: Savings=R100, Current=R500, FixedDeposit=R1000, Notice=R500
+    /// Minimum deposits: Savings=R100, Current=R500, FixedDeposit=R1000, Notice=R500.
     /// </summary>
     public OperationResult<Account> CreateAccount(string ownerName, string ownerIdNumber,
         AccountType type, decimal initialDeposit, string branchCode)
@@ -40,11 +40,11 @@ public class AccountService : IAccountService
 
         decimal minDeposit = type switch
         {
-            AccountType.Savings      => 100m,
-            AccountType.Current      => 500m,
+            AccountType.Savings => 100m,
+            AccountType.Current => 500m,
             AccountType.FixedDeposit => 1000m,
-            AccountType.Notice       => 500m,
-            _                        => 100m
+            AccountType.Notice => 500m,
+            _ => 100m
         };
 
         if (initialDeposit < minDeposit)
@@ -53,17 +53,16 @@ public class AccountService : IAccountService
 
         var account = new Account
         {
-            AccountNumber        = GenerateAccountNumber(),
-            OwnerName            = ownerName.Trim(),
-            OwnerIdNumber        = ownerIdNumber,
-            Type                 = type,
-            Status               = AccountStatus.Active,
-            Balance              = initialDeposit,
-            // BUG-005: Daily withdrawal limit is set to initial deposit instead of type-based limit
-            DailyWithdrawalLimit = initialDeposit,
-            DateOpened           = DateTime.UtcNow,
-            LastActivityDate     = DateTime.UtcNow,
-            BranchCode           = branchCode
+            AccountNumber = GenerateAccountNumber(),
+            OwnerName = ownerName.Trim(),
+            OwnerIdNumber = ownerIdNumber,
+            Type = type,
+            Status = AccountStatus.Active,
+            Balance = initialDeposit,
+            DailyWithdrawalLimit = GetDailyWithdrawalLimit(type),
+            DateOpened = DateTime.UtcNow,
+            LastActivityDate = DateTime.UtcNow,
+            BranchCode = branchCode
         };
 
         _accountRepo.Add(account);
@@ -78,46 +77,40 @@ public class AccountService : IAccountService
         var account = _accountRepo.GetById(accountId);
         if (account == null)
             return OperationResult<Account>.Failure("Account not found.");
-
         if (account.Status == AccountStatus.Closed)
             return OperationResult<Account>.Failure("Cannot update a closed account.");
-
         if (!_validator.IsValidName(ownerName))
             return OperationResult<Account>.Failure("Invalid owner name.");
-
         if (!_validator.IsValidBranchCode(branchCode))
             return OperationResult<Account>.Failure("Invalid branch code.");
 
-        account.OwnerName  = ownerName.Trim();
+        account.OwnerName = ownerName.Trim();
         account.BranchCode = branchCode;
         _accountRepo.Update(account);
         _audit.Log("ACCOUNT_UPDATED", "SYSTEM", $"Account {account.AccountNumber} updated.", account.AccountNumber);
-
         return OperationResult<Account>.Success(account, "Account updated.");
     }
 
     /// <summary>
-    /// Closes an account. Balance must be zero before closure.
+    /// Closes an account. Balance must be zero and the account must be Active before closure.
     /// </summary>
     public OperationResult<Account> CloseAccount(int accountId, string requestedBy)
     {
         var account = _accountRepo.GetById(accountId);
         if (account == null)
             return OperationResult<Account>.Failure("Account not found.");
-
         if (account.Status == AccountStatus.Closed)
             return OperationResult<Account>.Failure("Account is already closed.");
-
-        // BUG-006: checks > 0 instead of != 0, so accounts with negative balance can be closed
-        if (account.Balance > 0)
+        if (account.Status != AccountStatus.Active)
+            return OperationResult<Account>.Failure("Only active accounts can be closed.");
+        if (account.Balance != 0)
             return OperationResult<Account>.Failure(
                 "Account balance must be zero before closure. Please withdraw remaining funds.");
 
-        account.Status      = AccountStatus.Closed;
-        account.DateClosed  = DateTime.UtcNow;
+        account.Status = AccountStatus.Closed;
+        account.DateClosed = DateTime.UtcNow;
         _accountRepo.Update(account);
         _audit.Log("ACCOUNT_CLOSED", requestedBy, $"Account {account.AccountNumber} closed.", account.AccountNumber);
-
         return OperationResult<Account>.Success(account, "Account closed successfully.");
     }
 
@@ -171,16 +164,25 @@ public class AccountService : IAccountService
         if (reactivationDeposit < 50m)
             return OperationResult<bool>.Failure("Reactivation requires a minimum deposit of R50.");
 
-        account.Status           = AccountStatus.Active;
-        account.Balance         += reactivationDeposit;
+        account.Status = AccountStatus.Active;
+        account.Balance += reactivationDeposit;
         account.LastActivityDate = DateTime.UtcNow;
         _accountRepo.Update(account);
         _audit.Log("ACCOUNT_REACTIVATED", "SYSTEM", $"Account {account.AccountNumber} reactivated.");
         return OperationResult<bool>.Success(true);
     }
 
-    private string GenerateAccountNumber()
+    private static decimal GetDailyWithdrawalLimit(AccountType type) => type switch
     {
-        return "BC" + Interlocked.Increment(ref _accountCounter).ToString();
-    }
+        AccountType.Savings => 5000m,
+        AccountType.Current => 10000m,
+        AccountType.FixedDeposit => 0m,
+        AccountType.Notice => 2500m,
+        _ => 0m
+    };
+
+    private static int _ => 0;
+
+    private string GenerateAccountNumber()
+        => "BC" + Interlocked.Increment(ref _accountCounter).ToString();
 }
