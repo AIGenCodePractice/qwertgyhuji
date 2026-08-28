@@ -98,8 +98,8 @@ public class AccountCreationTests
         Assert.IsTrue(first.IsSuccess && second.IsSuccess);
         Assert.IsNotNull(first.Data);
         Assert.IsNotNull(second.Data);
-        Assert.StartsWith("BC", first.Data.AccountNumber);
-        Assert.StartsWith("BC", second.Data.AccountNumber);
+        StringAssert.StartsWith(first.Data.AccountNumber, "BC");
+        StringAssert.StartsWith(second.Data.AccountNumber, "BC");
         Assert.AreNotEqual(first.Data.AccountNumber, second.Data.AccountNumber);
     }
 
@@ -135,7 +135,7 @@ public class AccountCreationTests
             AccountType.Savings, 500m, "bad");
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid branch code.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid branch code.");
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Never);
     }
 
@@ -148,7 +148,7 @@ public class AccountCreationTests
             AccountType.Savings, 500m, TestDataHelper.ValidBranchCode);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid south african id number.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid south african id number.");
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Never);
     }
 
