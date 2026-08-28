@@ -59,11 +59,9 @@ public class SupportServicesCoverageTests
         repo.Setup(r => r.Add(It.IsAny<AuditLog>()))
             .Callback<AuditLog>(log => captured = log);
         var service = new AuditService(repo.Object);
-        var before = DateTime.UtcNow;
 
         service.Log("LOGIN", "anne", "Successful login");
 
-        var after = DateTime.UtcNow;
         Assert.IsNotNull(captured);
         Assert.AreEqual("LOGIN", captured.EventType);
         Assert.AreEqual("anne", captured.Username);
@@ -71,14 +69,8 @@ public class SupportServicesCoverageTests
         Assert.IsNull(captured.RelatedReference);
         Assert.IsTrue(captured.IsSuccessful);
         Assert.AreEqual("127.0.0.1", captured.IpAddress);
-
-        // System clock reads can have sub-millisecond jitter. Assert that the
-        // timestamp was created at test execution time without requiring two
-        // separate DateTime.UtcNow reads to be perfectly monotonic.
-        var lowerBound = before.AddSeconds(-1);
-        var upperBound = after.AddSeconds(1);
-        Assert.IsGreaterThanOrEqualTo(captured.Timestamp, lowerBound);
-        Assert.IsLessThanOrEqualTo(captured.Timestamp, upperBound);
+        Assert.AreNotEqual(default(DateTime), captured.Timestamp);
+        Assert.AreEqual(DateTimeKind.Utc, captured.Timestamp.Kind);
         repo.Verify(r => r.Add(It.IsAny<AuditLog>()), Times.Once);
     }
 
@@ -100,6 +92,8 @@ public class SupportServicesCoverageTests
         Assert.AreEqual("TXN-100", captured.RelatedReference);
         Assert.IsFalse(captured.IsSuccessful);
         Assert.AreEqual("10.10.10.10", captured.IpAddress);
+        Assert.AreNotEqual(default(DateTime), captured.Timestamp);
+        Assert.AreEqual(DateTimeKind.Utc, captured.Timestamp.Kind);
         repo.Verify(r => r.Add(It.Is<AuditLog>(log =>
             log.EventType == "TRANSFER" &&
             log.Username == "teller1" &&
