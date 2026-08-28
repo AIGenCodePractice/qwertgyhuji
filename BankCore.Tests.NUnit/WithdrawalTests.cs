@@ -210,7 +210,7 @@ public class WithdrawalTests
         _txnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
 
-    private sealed record WithdrawalTestCase(
+    public sealed record WithdrawalTestCase(
         decimal InitialBalance,
         decimal Amount,
         bool IsActive,
