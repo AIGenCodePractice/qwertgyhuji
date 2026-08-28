@@ -6,11 +6,6 @@ using Moq;
 
 namespace BankCore.Tests.MSTest;
 
-/// <summary>
-/// TC-AUTH-001, TC-AUTH-005, TC-AUTH-006, TC-AUTH-007, TC-AUTH-008, TC-AUTH-009
-/// Verify credential validation, case-sensitivity, locked-account handling, and successful token issuance.
-/// Passwords come from TestDataHelper — never hardcoded in test methods.
-/// </summary>
 [TestClass]
 public class LoginTests
 {
@@ -56,7 +51,6 @@ public class LoginTests
         var user = TestDataHelper.BuildUser(username: "jdoe");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
         var result = auth.Login("jdoe", TestDataHelper.ValidPassword);
-
         Assert.IsTrue(result.IsSuccess);
         Assert.IsNotNull(result.Data);
         Assert.IsFalse(string.IsNullOrWhiteSpace(result.Data.Token));
@@ -70,15 +64,12 @@ public class LoginTests
     [TestCategory("Functional")]
     public void Login_WrongCasePassword_IsRejected()
     {
-        var user = TestDataHelper.BuildUser(username: "jdoe");
-        var auth = CreateAuth(user, TestDataHelper.ValidPassword);
+        var auth = CreateAuth(TestDataHelper.BuildUser(username: "jdoe"), TestDataHelper.ValidPassword);
         var wrongCase = TestDataHelper.ValidPassword.ToLowerInvariant();
         Assert.AreNotEqual(TestDataHelper.ValidPassword, wrongCase);
-
         var result = auth.Login("jdoe", wrongCase);
-
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
@@ -88,16 +79,13 @@ public class LoginTests
     {
         var user = TestDataHelper.BuildLockedUser(username: "locked_user");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
         var lockedResult = auth.Login("locked_user", TestDataHelper.ValidPassword);
         Assert.IsFalse(lockedResult.IsSuccess);
-        Assert.Contains(lockedResult.Message.ToLowerInvariant(), "account is locked. contact your administrator.");
-
+        StringAssert.Contains(lockedResult.Message.ToLowerInvariant(), "account is locked. contact your administrator.");
         var unlock = auth.UnlockUser("locked_user", "admin1");
         Assert.IsTrue(unlock.IsSuccess);
         Assert.IsFalse(user.IsLocked);
         Assert.AreEqual(0, user.FailedLoginAttempts);
-
         var result = auth.Login("locked_user", TestDataHelper.ValidPassword);
         Assert.IsTrue(result.IsSuccess);
         Assert.IsNotNull(result.Data);
@@ -107,12 +95,10 @@ public class LoginTests
     [TestCategory("Negative")]
     public void Login_IncorrectPassword_ReturnsFailure()
     {
-        var user = TestDataHelper.BuildUser(username: "jdoe");
-        var auth = CreateAuth(user, TestDataHelper.ValidPassword);
+        var auth = CreateAuth(TestDataHelper.BuildUser(username: "jdoe"), TestDataHelper.ValidPassword);
         var result = auth.Login("jdoe", "WrongP@ss99");
-
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Once);
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
@@ -121,12 +107,10 @@ public class LoginTests
     [TestCategory("Negative")]
     public void Login_NonExistentUsername_ReturnsFailure()
     {
-        var user = TestDataHelper.BuildUser(username: "jdoe");
-        var auth = CreateAuth(user, TestDataHelper.ValidPassword);
+        var auth = CreateAuth(TestDataHelper.BuildUser(username: "jdoe"), TestDataHelper.ValidPassword);
         var result = auth.Login("nobody", TestDataHelper.ValidPassword);
-
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
@@ -134,12 +118,10 @@ public class LoginTests
     [TestCategory("Negative")]
     public void Login_LockedAccount_ReturnsFailure()
     {
-        var user = TestDataHelper.BuildLockedUser(username: "locked_user");
-        var auth = CreateAuth(user, TestDataHelper.ValidPassword);
+        var auth = CreateAuth(TestDataHelper.BuildLockedUser(username: "locked_user"), TestDataHelper.ValidPassword);
         var result = auth.Login("locked_user", TestDataHelper.ValidPassword);
-
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "account is locked. contact your administrator.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "account is locked. contact your administrator.");
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
@@ -150,12 +132,9 @@ public class LoginTests
     [DataRow("   ")]
     public void Login_EmptyUsernameOrPassword_ReturnsFailure(string? blank)
     {
-        var user = TestDataHelper.BuildUser();
-        var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
+        var auth = CreateAuth(TestDataHelper.BuildUser(), TestDataHelper.ValidPassword);
         var r1 = auth.Login(blank!, TestDataHelper.ValidPassword);
         var r2 = auth.Login("jdoe", blank!);
-
         Assert.IsFalse(r1.IsSuccess);
         Assert.IsFalse(r2.IsSuccess);
     }
