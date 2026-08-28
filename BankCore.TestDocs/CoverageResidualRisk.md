@@ -1,44 +1,51 @@
-# Phase 3 Code Coverage — Aggressive Attempt and Residual Risk
+# Phase 3 Code Coverage — Residual Risk
 
 ## Assessment baseline
-The WIL specification requires minimum line/branch coverage of 80%/70% for Transaction Engine, 90%/85% for Interest Calculator, 80%/70% for Loan Processing, 85%/75% for Authentication, and 95%/90% for Validation Library. It also requires comprehensive techniques, including boundary analysis, decision tables, state transitions and negative/robustness testing.
+The WIL specification requires minimum line/branch coverage of 80%/70% for Transaction Engine, 90%/85% for Interest Calculator, 80%/70% for Loan Processing, 85%/75% for Authentication, and 95%/90% for Validation Library.
 
-## Current reported coverage
-| Module | Required | Reported | Gap |
+## Latest measured result
+**Coverage report date:** 2026-08-28 08:44:17  
+**Overall report:** 82.8% line · 83.7% branch  
+**Core assembly:** 97.7% line · 90.9% branch
+
+| Module | Required | Latest measured | Exit status |
 |---|---:|---:|---|
-| Transaction | 80% / 70% | 83% / 63% | Branch -7pp |
-| Interest | 90% / 85% | 96% / 54% | Branch -31pp |
-| Loan | 80% / 70% | 87% / 65% | Branch -5pp |
-| Auth | 85% / 75% | 76% / 67% | Line -9pp; Branch -8pp |
-| Validation | 95% / 90% | 74% / 56% | Line -21pp; Branch -34pp |
-
-## Aggressive coverage attempts added
-Additional tests explicitly target decision points, invalid paths, boundary values, alternate status paths, compound/simple calculation paths, security-pattern families, and null/missing repository branches.
-
-### Transaction Engine
-Additional branch-focused cases exercise transfer early exits, missing source/destination accounts, inactive source/destination accounts, insufficient funds, daily-limit rejection, successful transfer, reversal validation/status/time/account paths, deposit reversal insufficiency, withdrawal reversal, and transaction-history missing/range/non-range paths.
-
-### Interest Calculator
-Existing branch tests cover invalid principal/rate/days/frequency and the compound/simple FutureValue choice. Residual risk remains around branch granularity in mathematical operations and combinations that are difficult to activate through public APIs without changing production behaviour.
-
-### Loan Processing
-Additional cases exercise application validation branches, missing/inactive accounts, debt-to-income rejection, successful pending application, approval with missing linked account, schedule/get-loan failure/success paths, repayment invalid/overpayment/settlement/arrears-recovery paths, and settlement failure/success paths.
-
-### Authentication
-Additional cases exercise lockout expiry, third failed-login lockout, blank/missing/inactive/expired sessions, logout missing/success, password validation/history paths, registration validation/duplicate/success, lock/unlock missing/success, and permission allow/deny branches.
-
-### Validation Library
-An additional dedicated suite expands partitions for every public validator: SA ID length/digit/month/day/Luhn paths, account-number regex boundaries, custom amount min/max boundaries, name length/regex alternatives, username length/regex alternatives, each password complexity condition, branch-code length/content boundaries, email regex partitions, and every SQL/XSS security-pattern family.
+| Transaction | 80% / 70% | **97.4% / 92.1%** | **Met** |
+| Interest | 90% / 85% | **100% / 90.6%** | **Met** |
+| Loan | 80% / 70% | **95.8% / 90.2%** | **Met** |
+| Auth | 85% / 75% | **100% / 96.5%** | **Met** |
+| Validation | 95% / 90% | **100% / 100%** | **Met** |
 
 ## Residual risk statement
-The remaining uncovered branches are **known and explicitly disclosed**, rather than being represented as successful coverage. The current coverage shortfalls therefore constitute an evidence-backed residual risk: high-risk business logic has received aggressive additional testing, but the measured branch targets are still not demonstrated as met.
+The specified module coverage thresholds are now met. Residual risk has therefore shifted away from the original Transaction/Interest/Loan/Auth/Validation shortfalls.
 
-### Highest residual risks
-1. **Validation Library — High:** line and branch coverage remain materially below the specification. Some branches may require additional equivalence classes and malformed-input combinations.
-2. **Interest Calculator — High:** branch coverage remains substantially below target despite high line coverage; branch adequacy is therefore a more meaningful concern than line execution alone.
-3. **Transaction Engine — High:** core monetary paths are well exercised, but branch coverage remains below the mandated threshold, especially around multi-condition business rules and reversal/transaction combinations.
-4. **Loan Processing — High:** application, repayment and settlement paths are exercised, but not all branch combinations are demonstrated by the current measured result.
-5. **Authentication — High:** both line and branch coverage remain below target; lockout/session/permission permutations remain security-sensitive.
+### 1. Data layer — High residual coverage risk
+The latest summary reports `BankCore.Data` with **0 covered lines from 169 coverable lines** and **0 covered branches from 30 total branches**. This is the main reason the overall solution coverage is materially lower than the `BankCore.Core` coverage.
 
-## Recommended assessor wording
-"The tester made an aggressive, risk-based attempt to close the remaining coverage gaps by adding targeted branch, boundary, invalid-input, status-transition and dependency-isolation tests. The residual shortfalls are intentionally reported rather than hidden. Based on the current measured results, the module-specific coverage exit criteria are not yet fully demonstrated, and the uncovered branches remain a release risk requiring further targeted tests and/or justified exclusion." 
+**Risk:** repository and seeding behaviour is not demonstrated as directly executed by the latest aggregated coverage run.
+
+**Recommended treatment:** add direct Data-layer tests or explicitly justify the layer boundary if the assessment scope intentionally measures service-layer logic only.
+
+### 2. ReportingService branch coverage — Medium residual risk
+`ReportingService` is measured at **97.0% line coverage** but only **60.0% branch coverage** (12/20 branches).
+
+**Risk:** alternate statement-generation combinations remain less thoroughly demonstrated than the named threshold modules.
+
+**Recommended treatment:** add date-range, missing-account, empty-transaction, ordering and filtering combinations to close the remaining branches.
+
+### 3. Intentional exclusions — Low residual risk
+The MSTest suite contains a documented `[Ignore(...)]` demonstration required for framework/rubric evidence. An ignored test is intentionally skipped and therefore does not contribute execution coverage.
+
+**Risk:** the exclusion must remain documented so it is not mistaken for an unexecuted defect test.
+
+**Recommended treatment:** retain the reason on the attribute and keep the exclusion visible in the test report.
+
+### 4. Complexity hotspots — Maintainability risk
+Several methods remain highly complex even where coverage is strong, including `LoanService.ApplyForLoan`, `TransactionService.ReverseTransaction`, `ValidationService.IsValidSouthAfricanIdNumber`, `ReportingService.GenerateStatement`, `TransactionService.Transfer` and `AuthService.Login`.
+
+**Risk:** future changes may be difficult to maintain because high cyclomatic complexity remains.
+
+**Recommended treatment:** consider production refactoring into smaller decision units; this is a maintainability improvement rather than a current coverage exit failure.
+
+## Conclusion
+**All named Phase 3 coverage thresholds are met in the latest report.** The residual risk is now explicitly limited to the **Data layer's 0% execution coverage, ReportingService branch coverage, intentional exclusions, and maintainability hotspots**.
