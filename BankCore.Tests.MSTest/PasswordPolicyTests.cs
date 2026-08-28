@@ -74,37 +74,28 @@ public class PasswordPolicyTests
         _session = null;
     }
 
-    /// <summary>TC-AUTH-012 — Reject password change to a weak new password</summary>
     [TestMethod]
     [TestCategory("Negative")]
     public void ChangePassword_WeakNewPassword_ReturnsFailure()
     {
-        var result = _auth!.ChangePassword(
-            "tok-pwd-001",
-            TestDataHelper.ValidPassword,
-            TestDataHelper.WeakPassword);
+        var result = _auth!.ChangePassword("tok-pwd-001", TestDataHelper.ValidPassword, TestDataHelper.WeakPassword);
 
         Assert.IsFalse(result.IsSuccess);
         Assert.Contains(result.Message.ToLowerInvariant(), "new password does not meet complexity requirements.");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
-    /// <summary>TC-AUTH-013 — Reject password change when old password is incorrect</summary>
     [TestMethod]
     [TestCategory("Negative")]
     public void ChangePassword_IncorrectOldPassword_ReturnsFailure()
     {
-        var result = _auth!.ChangePassword(
-            "tok-pwd-001",
-            "NotTheOldP@ss1",
-            TestDataHelper.MinLengthPassword);
+        var result = _auth!.ChangePassword("tok-pwd-001", "NotTheOldP@ss1", TestDataHelper.MinLengthPassword);
 
         Assert.IsFalse(result.IsSuccess);
         Assert.Contains(result.Message.ToLowerInvariant(), "current password is incorrect.");
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
-    /// <summary>TC-AUTH-014 — Accept password change at exact minimum length</summary>
     [TestMethod]
     [TestCategory("Boundary")]
     [TestCategory("Functional")]
@@ -112,17 +103,13 @@ public class PasswordPolicyTests
     {
         Assert.AreEqual(8, TestDataHelper.MinLengthPassword.Length);
 
-        var result = _auth!.ChangePassword(
-            "tok-pwd-001",
-            TestDataHelper.ValidPassword,
-            TestDataHelper.MinLengthPassword);
+        var result = _auth!.ChangePassword("tok-pwd-001", TestDataHelper.ValidPassword, TestDataHelper.MinLengthPassword);
 
         Assert.IsTrue(result.IsSuccess, result.Message);
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Once);
         _mockHasher!.Verify(h => h.HashPassword(TestDataHelper.MinLengthPassword), Times.Once);
     }
 
-    /// <summary>TC-AUTH-015 — Reject password one character below minimum length</summary>
     [TestMethod]
     [TestCategory("Boundary")]
     [TestCategory("Negative")]
@@ -130,10 +117,7 @@ public class PasswordPolicyTests
     {
         Assert.AreEqual(7, TestDataHelper.BelowMinPassword.Length);
 
-        var result = _auth!.ChangePassword(
-            "tok-pwd-001",
-            TestDataHelper.ValidPassword,
-            TestDataHelper.BelowMinPassword);
+        var result = _auth!.ChangePassword("tok-pwd-001", TestDataHelper.ValidPassword, TestDataHelper.BelowMinPassword);
 
         Assert.IsFalse(result.IsSuccess);
         Assert.Contains(result.Message.ToLowerInvariant(), "new password does not meet complexity requirements.");
@@ -144,7 +128,6 @@ public class PasswordPolicyTests
     [TestCategory("Negative")]
     public void ChangePassword_InvalidSession_ReturnsFailure()
     {
-        // Explicitly stub unknown token → null session (do not rely on shared Setup alone)
         const string badToken = "tok-missing-definitely-invalid";
         _mockSessions!.Setup(r => r.GetByToken(badToken)).Returns((Session?)null);
         _mockSessions.Setup(r => r.GetByToken(It.IsAny<string>()))
@@ -157,28 +140,22 @@ public class PasswordPolicyTests
             _mockAudit!.Object,
             _mockValidator!.Object);
 
-        var result = auth.ChangePassword(
-            badToken,
-            TestDataHelper.ValidPassword,
-            TestDataHelper.MinLengthPassword);
+        var result = auth.ChangePassword(badToken, TestDataHelper.ValidPassword, TestDataHelper.MinLengthPassword);
 
         Assert.IsFalse(result.IsSuccess, $"Expected invalid session failure, got: {result.Message}");
         Assert.Contains(result.Message.ToLowerInvariant(), "invalid session.");
         _mockUsers.Verify(u => u.Update(It.IsAny<User>()), Times.Never);
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [TestCategory("Functional")]
-    [DataRow("NoSpecial1")]   // missing special
-    [DataRow("noupper1!")]    // missing upper
-    [DataRow("NOLOWER1!")]    // missing lower
-    [DataRow("NoDigits!!")]   // missing digit
+    [DataRow("NoSpecial1")]
+    [DataRow("noupper1!")]
+    [DataRow("NOLOWER1!")]
+    [DataRow("NoDigits!!")]
     public void ChangePassword_MissingComplexityRule_ReturnsFailure(string badPassword)
     {
-        var result = _auth!.ChangePassword(
-            "tok-pwd-001",
-            TestDataHelper.ValidPassword,
-            badPassword);
+        var result = _auth!.ChangePassword("tok-pwd-001", TestDataHelper.ValidPassword, badPassword);
 
         Assert.IsFalse(result.IsSuccess);
     }
