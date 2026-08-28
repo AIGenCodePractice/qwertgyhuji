@@ -4,8 +4,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace BankCore.Tests.MSTest;
 
 /// <summary>
-/// Explicit MSTest attribute/API demonstrations required by the portfolio rubric.
-/// These tests deliberately use methods that throw ArgumentException for invalid input.
+/// Explicit MSTest 4 exception and Ignore demonstrations.
+/// MSTest 4 removed ExpectedExceptionAttribute and Assert.ThrowsException&lt;T&gt;,
+/// so the current supported Assert.Throws&lt;T&gt; API is used for the six exception paths.
 /// </summary>
 [TestClass]
 public class MSTestExceptionAndIgnoreDemonstrationTests
@@ -13,67 +14,63 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     private readonly InterestCalculator _calculator = new();
 
     // -----------------------------------------------------------------
-    // [ExpectedException] demonstrations (3 distinct examples)
+    // Exception assertion demonstrations (six distinct invalid paths)
     // -----------------------------------------------------------------
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
-    public void ExpectedException_SimpleInterest_ZeroPrincipal()
+    public void Throws_SimpleInterest_ZeroPrincipal()
     {
-        _calculator.SimpleInterest(0m, 0.05m, 12);
+        Assert.Throws<ArgumentException>(() =>
+            _calculator.SimpleInterest(0m, 0.05m, 12));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
-    public void ExpectedException_CompoundInterest_NegativeRate()
+    public void Throws_CompoundInterest_NegativeRate()
     {
-        _calculator.CompoundInterest(1000m, -0.01m, 12, 12);
+        Assert.Throws<ArgumentException>(() =>
+            _calculator.CompoundInterest(1000m, -0.01m, 12, 12));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
-    public void ExpectedException_DailyInterest_ZeroDays()
+    public void Throws_DailyInterest_ZeroDays()
     {
-        _calculator.DailyInterest(1000m, 0.05m, 0);
+        Assert.Throws<ArgumentException>(() =>
+            _calculator.DailyInterest(1000m, 0.05m, 0));
     }
 
-    // -----------------------------------------------------------------
-    // Assert.ThrowsException<T> demonstrations (3 distinct examples)
-    // -----------------------------------------------------------------
-
     [TestMethod]
-    public void ThrowsException_EffectiveAnnualRate_NegativeRate()
+    public void Throws_EffectiveAnnualRate_NegativeRate()
     {
-        var exception = Assert.ThrowsException<ArgumentException>(
-            () => _calculator.EffectiveAnnualRate(-0.01m, 12));
+        var exception = Assert.Throws<ArgumentException>(() =>
+            _calculator.EffectiveAnnualRate(-0.01m, 12));
 
         StringAssert.Contains(exception.Message, "Rate cannot be negative");
     }
 
     [TestMethod]
-    public void ThrowsException_CompoundInterest_ZeroFrequency()
+    public void Throws_CompoundInterest_ZeroFrequency()
     {
-        var exception = Assert.ThrowsException<ArgumentException>(
-            () => _calculator.CompoundInterest(1000m, 0.05m, 12, 0));
+        var exception = Assert.Throws<ArgumentException>(() =>
+            _calculator.CompoundInterest(1000m, 0.05m, 12, 0));
 
         StringAssert.Contains(exception.Message, "Compounding frequency must be positive");
     }
 
     [TestMethod]
-    public void ThrowsException_FutureValue_ZeroMonths()
+    public void Throws_FutureValue_ZeroMonths()
     {
-        var exception = Assert.ThrowsException<ArgumentException>(
-            () => _calculator.FutureValue(1000m, 0.05m, 0));
+        var exception = Assert.Throws<ArgumentException>(() =>
+            _calculator.FutureValue(1000m, 0.05m, 0));
 
         StringAssert.Contains(exception.Message, "Months must be positive");
     }
 
     // -----------------------------------------------------------------
-    // [Ignore] demonstration
+    // [Ignore] demonstration with documented reason
     // -----------------------------------------------------------------
 
     [TestMethod]
-    [Ignore("Documented demo of MSTest Ignore: this exploratory precision test is intentionally excluded because exact floating-point behaviour is not a stable acceptance criterion; rounded public results are tested elsewhere.")]
+    [Ignore("Documented MSTest Ignore demonstration: this exploratory precision test is intentionally excluded because exact floating-point behaviour is not a stable acceptance criterion; rounded public results are tested elsewhere.")]
     public void Ignored_ExploratoryCompoundInterest_PrecisionExperiment()
     {
         var result = _calculator.CompoundInterest(1234.56m, 0.0735m, 17, 365);
