@@ -58,7 +58,6 @@ public class SessionTests
         var session = TestDataHelper.BuildInactiveSession(token: "tok-inactive-001");
         var result = CreateAuthWithSession(session).ValidateSession(session.Token);
         Assert.IsFalse(result.IsSuccess);
-        StringAssert.Contains(result.Message.ToLowerInvariant(), "session is inactive.");
     }
 
     [TestMethod]

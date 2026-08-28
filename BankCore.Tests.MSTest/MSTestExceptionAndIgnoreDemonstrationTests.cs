@@ -18,24 +18,24 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     // -----------------------------------------------------------------
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void ExpectedException_SimpleInterest_ZeroPrincipal()
     {
-        _calculator.SimpleInterest(0m, 0.05m, 12);
+        AssertThrows<ArgumentException>(() =>
+            _calculator.SimpleInterest(0m, 0.05m, 12));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void ExpectedException_CompoundInterest_NegativeRate()
     {
-        _calculator.CompoundInterest(1000m, -0.01m, 12, 12);
+        AssertThrows<ArgumentException>(() =>
+            _calculator.CompoundInterest(1000m, -0.01m, 12, 12));
     }
 
     [TestMethod]
-    [ExpectedException(typeof(ArgumentException))]
     public void ExpectedException_DailyInterest_ZeroDays()
     {
-        _calculator.DailyInterest(1000m, 0.05m, 0);
+        AssertThrows<ArgumentException>(() =>
+            _calculator.DailyInterest(1000m, 0.05m, 0));
     }
 
     // -----------------------------------------------------------------
@@ -45,7 +45,7 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     [TestMethod]
     public void ThrowsException_EffectiveAnnualRate_NegativeRate()
     {
-        var exception = Assert.ThrowsException<ArgumentException>(() =>
+        var exception = AssertThrows<ArgumentException>(() =>
             _calculator.EffectiveAnnualRate(-0.01m, 12));
 
         StringAssert.Contains(exception.Message, "Rate cannot be negative");
@@ -54,7 +54,7 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     [TestMethod]
     public void ThrowsException_CompoundInterest_ZeroFrequency()
     {
-        var exception = Assert.ThrowsException<ArgumentException>(() =>
+        var exception = AssertThrows<ArgumentException>(() =>
             _calculator.CompoundInterest(1000m, 0.05m, 12, 0));
 
         StringAssert.Contains(exception.Message, "Compounding frequency must be positive");
@@ -63,7 +63,7 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     [TestMethod]
     public void ThrowsException_FutureValue_ZeroMonths()
     {
-        var exception = Assert.ThrowsException<ArgumentException>(() =>
+        var exception = AssertThrows<ArgumentException>(() =>
             _calculator.FutureValue(1000m, 0.05m, 0));
 
         StringAssert.Contains(exception.Message, "Months must be positive");
@@ -79,5 +79,21 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     {
         var result = _calculator.CompoundInterest(1234.56m, 0.0735m, 17, 365);
         Assert.AreEqual(123.456789m, result);
+    }
+
+    private static TException AssertThrows<TException>(Action action)
+        where TException : Exception
+    {
+        try
+        {
+            action();
+        }
+        catch (TException exception)
+        {
+            return exception;
+        }
+
+        Assert.Fail($"Expected {typeof(TException).Name} to be thrown.");
+        throw new InvalidOperationException("Unreachable.");
     }
 }

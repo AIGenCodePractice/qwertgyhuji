@@ -32,7 +32,7 @@ Phase 4 records the executed test evidence, defects, regression status and final
 
 ## 4. Execution conclusion
 
-All six named module-specific Phase 3 coverage exit criteria are met in the latest archived report. No module remains marked as below its specified line or branch threshold.
+The archived coverage report met the named Phase 3 coverage thresholds at the time it was generated. The current requirement-based baseline contains confirmed functional test failures against deliberate production defects; these are tracked as Open defects in `DefectLog.xlsx` and must not be relabelled as passing tests.
 
 ## 5. Outstanding execution risks
 

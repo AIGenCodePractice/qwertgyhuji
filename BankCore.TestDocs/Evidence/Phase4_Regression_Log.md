@@ -21,4 +21,4 @@ This log records regression evidence after Phase 3 coverage, framework-compatibi
 
 ## Regression conclusion
 
-The latest executed coverage report demonstrates that none of the six named threshold modules is below its required exit criterion. Two final rubric-polish changes were made after that report (`[DataTestMethod]` syntax and additional Withdrawal framework demonstrations), so one final test run should be performed before submission to confirm the final repository revision. Remaining risks are carried forward as coverage and maintainability risks rather than as confirmed functional regressions.
+The archived coverage report remains valid historical evidence only. The current baseline has open product defects recorded in `DefectLog.xlsx`; a final regression run is only appropriate after production fixes and must report its actual result.

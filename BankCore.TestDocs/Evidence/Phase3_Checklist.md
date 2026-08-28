@@ -19,7 +19,7 @@
 - [x] HTML report in `BankCore.TestDocs/Coverage/`
 - [x] Latest report date: **2026-08-28 08:44:17**
 - [x] Analysis vs thresholds: `Evidence/Phase3_Coverage_Analysis.md`
-- [x] **All six named module thresholds meet the required line and branch coverage exit criteria**
+- [x] The archived 2026-08-28 coverage report meets the six named module thresholds; it predates the reinstated requirement-based defect tests.
 - [x] Residual risks documented: Data layer 0%, ReportingService branch coverage, intentional exclusions and complexity hotspots
 
 ## Research tasks
@@ -29,7 +29,7 @@
 
 ## Problems & fixes evidence
 
-- [x] `Evidence/Phase3_Problems_and_Fixes.md` (maps Error List / Test Explorer issues to fixes)
+- [x] `Evidence/Phase3_Problems_and_Fixes.md` (maps harness/tooling issues separately from open product defects)
 
 ## Assessor quick links
 
