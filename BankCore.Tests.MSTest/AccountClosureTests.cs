@@ -45,7 +45,7 @@ public class AccountClosureTests
         var result = service.CloseAccount(1, "teller1");
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "account balance must be zero before closure. please withdraw remaining funds.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "account balance must be zero before closure. please withdraw remaining funds.");
         _repo!.Verify(r => r.Update(It.IsAny<Account>()), Times.Never);
     }
 
@@ -70,7 +70,7 @@ public class AccountClosureTests
         var result = service.CloseAccount(2, "teller1");
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "account is already closed.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "account is already closed.");
     }
 
     [TestMethod]
@@ -96,7 +96,7 @@ public class AccountClosureTests
         var result = service.CloseAccount(3, "teller1");
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "only active accounts can be closed.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "only active accounts can be closed.");
         _repo!.Verify(r => r.Update(It.IsAny<Account>()), Times.Never);
     }
 
@@ -108,7 +108,7 @@ public class AccountClosureTests
         var result = service.ReactivateAccount(2, 100m);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "only dormant accounts can be reactivated.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "only dormant accounts can be reactivated.");
     }
 
     [TestMethod]
@@ -132,6 +132,6 @@ public class AccountClosureTests
         var result = service.ReactivateAccount(3, 49.99m);
 
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message, "Reactivation requires a minimum deposit of R50.");
+        StringAssert.Contains(result.Message, "Reactivation requires a minimum deposit of R50.");
     }
 }
