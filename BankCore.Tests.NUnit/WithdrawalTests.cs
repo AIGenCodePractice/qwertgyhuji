@@ -64,6 +64,33 @@ public class WithdrawalTests
     }
 
     [Test]
+    [Category("Critical")]
+    [TestCaseSource(nameof(GetWithdrawalTestCases))]
+    public void Withdraw_WithTestCaseSource_ExercisesSuccessAndFailurePartitions(WithdrawalTestCase testCase)
+    {
+        _account.Balance = testCase.InitialBalance;
+        _account.Status = testCase.IsActive ? AccountStatus.Active : AccountStatus.Closed;
+
+        var result = _svc.Withdraw(1, testCase.Amount, testCase.Description, "teller1");
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.EqualTo(testCase.ShouldSucceed));
+            if (testCase.ShouldSucceed)
+                Assert.That(_account.Balance, Is.EqualTo(testCase.ExpectedBalance));
+            else
+                Assert.That(result.Message, Is.Not.Empty);
+        }
+    }
+
+    private static IEnumerable<WithdrawalTestCase> GetWithdrawalTestCases()
+    {
+        yield return new WithdrawalTestCase(1000m, 250m, true, true, 750m, "Valid withdrawal");
+        yield return new WithdrawalTestCase(100m, 150m, true, false, 100m, "Insufficient funds");
+        yield return new WithdrawalTestCase(1000m, 50m, false, false, 1000m, "Inactive account");
+    }
+
+    [Test]
     [Category("Boundary")]
     public void Withdraw_ExactBalance_SucceedsAndZeroBalance()
     {
@@ -144,6 +171,19 @@ public class WithdrawalTests
     }
 
     [Test]
+    [Retry(2)]
+    [Category("Performance")]
+    public void Withdraw_RetryDemonstration_ValidOperationRemainsSuccessful()
+    {
+        var result = _svc.Withdraw(1, 10m, "retry demonstration", "teller1");
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.IsSuccess, Is.True, result.Message);
+            Assert.That(_account.Balance, Is.EqualTo(990m));
+        }
+    }
+
+    [Test]
     [Category("Critical")]
     public void Withdraw_MultipleAsserts_ValidatesCompletedWithdrawal()
     {
@@ -169,4 +209,12 @@ public class WithdrawalTests
             Throws.TypeOf<InvalidOperationException>());
         _txnRepo.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Once);
     }
+
+    private sealed record WithdrawalTestCase(
+        decimal InitialBalance,
+        decimal Amount,
+        bool IsActive,
+        bool ShouldSucceed,
+        decimal ExpectedBalance,
+        string Description);
 }
