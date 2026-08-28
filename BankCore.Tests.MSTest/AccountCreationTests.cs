@@ -35,7 +35,7 @@ public class AccountCreationTests
         _service = null!;
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [DataRow("Savings", 100.0)]
     [DataRow("Current", 500.0)]
     [DataRow("FixedDeposit", 1000.0)]
@@ -54,7 +54,7 @@ public class AccountCreationTests
         _accountRepo.Verify(r => r.Add(It.IsAny<Account>()), Times.Once);
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [DataRow("Savings", 99.99, 100.00)]
     [DataRow("Current", 499.99, 500.00)]
     [DataRow("FixedDeposit", 999.99, 1000.00)]
@@ -75,6 +75,7 @@ public class AccountCreationTests
 
     [TestMethod]
     [TestCategory("Smoke")]
+    [TestCategory("Functional")]
     public void CreateAccount_ValidInput_ReturnsActiveAccount()
     {
         var result = _service.CreateAccount(TestDataHelper.ValidOwnerName, TestDataHelper.ValidIdNumber,
