@@ -49,7 +49,7 @@ public class AccountClosureTests
         _repo!.Verify(r => r.Update(It.IsAny<Account>()), Times.Never);
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [TestCategory("Boundary")]
     [DataRow(0.01)]
     [DataRow(-1.00)]
