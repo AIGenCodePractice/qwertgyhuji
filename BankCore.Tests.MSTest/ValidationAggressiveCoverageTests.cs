@@ -8,7 +8,7 @@ public class ValidationAggressiveCoverageTests
 {
     private readonly ValidationService _validation = new();
 
-    [TestMethod]
+    [DataTestMethod]
     [DataRow("8001015009087", true)]
     [DataRow("8001015009088", false)]
     [DataRow("9913995009087", false)]
@@ -21,7 +21,7 @@ public class ValidationAggressiveCoverageTests
     public void SouthAfricanId_AggressivePartitions(string id, bool expected)
         => Assert.AreEqual(expected, _validation.IsValidSouthAfricanIdNumber(id));
 
-    [TestMethod]
+    [DataTestMethod]
     [DataRow("BC0000000000", true)]
     [DataRow("BC9999999999", true)]
     [DataRow("bc1234567890", false)]
@@ -44,7 +44,7 @@ public class ValidationAggressiveCoverageTests
         Assert.IsTrue(_validation.IsValidAmount(999999.99m));
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [DataRow("Jo", true)]
     [DataRow("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", true)]
     [DataRow("A", false)]
