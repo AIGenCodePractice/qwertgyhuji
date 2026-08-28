@@ -1,0 +1,8 @@
+{
+  "TestCredentials": {
+    "ValidPassword": "SecureP@ss1",
+    "WeakPassword": "weak",
+    "MinLengthPassword": "Ab1!xxxx",
+    "BelowMinPassword": "Ab1!xxx"
+  }
+}
