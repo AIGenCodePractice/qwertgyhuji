@@ -28,27 +28,15 @@ public class SessionTests
     [TestCleanup]
     public void Teardown()
     {
-        _mockUsers = null;
-        _mockSessions = null;
-        _mockHasher = null;
-        _mockAudit = null;
-        _mockValidator = null;
-        _auth = null;
+        _mockUsers = null; _mockSessions = null; _mockHasher = null; _mockAudit = null; _mockValidator = null; _auth = null;
     }
 
     private AuthService CreateAuthWithSession(Session session)
     {
         _mockSessions = TestMockFactory.CreateSessionRepository(session);
         _mockSessions.Setup(r => r.GetByToken(session.Token)).Returns(session);
-        _mockSessions.Setup(r => r.GetByToken(It.Is<string>(t => t != session.Token)))
-            .Returns((Session?)null);
-
-        _auth = new AuthService(
-            _mockUsers!.Object,
-            _mockSessions.Object,
-            _mockHasher!.Object,
-            _mockAudit!.Object,
-            _mockValidator!.Object);
+        _mockSessions.Setup(r => r.GetByToken(It.Is<string>(t => t != session.Token))).Returns((Session?)null);
+        _auth = new AuthService(_mockUsers!.Object, _mockSessions.Object, _mockHasher!.Object, _mockAudit!.Object, _mockValidator!.Object);
         return _auth;
     }
 
@@ -57,10 +45,7 @@ public class SessionTests
     public void Logout_ValidToken_InvalidatesSession()
     {
         var session = TestDataHelper.BuildActiveSession(token: "tok-logout-001");
-        var auth = CreateAuthWithSession(session);
-
-        var result = auth.Logout(session.Token);
-
+        var result = CreateAuthWithSession(session).Logout(session.Token);
         Assert.IsTrue(result.IsSuccess);
         Assert.IsFalse(session.IsActive);
         _mockSessions!.Verify(s => s.Update(It.Is<Session>(x => !x.IsActive)), Times.Once);
@@ -71,12 +56,9 @@ public class SessionTests
     public void ValidateSession_InactiveToken_ReturnsFailure()
     {
         var session = TestDataHelper.BuildInactiveSession(token: "tok-inactive-001");
-        var auth = CreateAuthWithSession(session);
-
-        var result = auth.ValidateSession(session.Token);
-
+        var result = CreateAuthWithSession(session).ValidateSession(session.Token);
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "session is inactive.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "session is inactive.");
     }
 
     [TestMethod]
@@ -84,12 +66,9 @@ public class SessionTests
     public void ValidateSession_ExpiredToken_ReturnsFailure()
     {
         var session = TestDataHelper.BuildExpiredSession(token: "tok-expired-001");
-        var auth = CreateAuthWithSession(session);
-
-        var result = auth.ValidateSession(session.Token);
-
+        var result = CreateAuthWithSession(session).ValidateSession(session.Token);
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "session has expired.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "session has expired.");
     }
 
     [TestMethod]
@@ -98,53 +77,41 @@ public class SessionTests
     {
         var session = TestDataHelper.BuildActiveSession(token: "tok-boundary-001");
         session.ExpiresAt = DateTime.UtcNow;
-        var auth = CreateAuthWithSession(session);
-
-        var result = auth.ValidateSession(session.Token);
-
+        var result = CreateAuthWithSession(session).ValidateSession(session.Token);
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "session has expired.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "session has expired.");
     }
 
     [TestMethod]
     [TestCategory("Functional")]
-    /// <summary>REQ-AUTH-002 / TC-AUTH-002 — token cannot be reused after logout</summary>
     public void TC_AUTH_002_Logout_InvalidatesToken_CannotBeReused()
     {
         var session = TestDataHelper.BuildActiveSession(token: "tok-reuse-001");
         var auth = CreateAuthWithSession(session);
-
         var logout = auth.Logout(session.Token);
         var validate = auth.ValidateSession(session.Token);
-
         Assert.IsTrue(logout.IsSuccess);
         Assert.IsFalse(validate.IsSuccess);
-        Assert.Contains(validate.Message.ToLowerInvariant(), "session is inactive.");
+        StringAssert.Contains(validate.Message.ToLowerInvariant(), "session is inactive.");
     }
 
     [TestMethod]
     [TestCategory("Negative")]
     public void ValidateSession_UnknownToken_ReturnsFailure()
     {
-        var session = TestDataHelper.BuildActiveSession(token: "tok-known");
-        var auth = CreateAuthWithSession(session);
-
-        var result = auth.ValidateSession("tok-unknown");
-
+        var result = CreateAuthWithSession(TestDataHelper.BuildActiveSession(token: "tok-known")).ValidateSession("tok-unknown");
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "invalid session.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "invalid session.");
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [TestCategory("Negative")]
     [DataRow(null)]
     [DataRow("")]
     [DataRow("   ")]
     public void ValidateSession_BlankToken_ReturnsFailure(string? token)
     {
-        var auth = CreateAuthWithSession(TestDataHelper.BuildActiveSession());
-        var result = auth.ValidateSession(token!);
-
+        var result = CreateAuthWithSession(TestDataHelper.BuildActiveSession()).ValidateSession(token!);
         Assert.IsFalse(result.IsSuccess);
     }
 
@@ -152,11 +119,8 @@ public class SessionTests
     [TestCategory("Negative")]
     public void Logout_UnknownToken_ReturnsFailure()
     {
-        var auth = CreateAuthWithSession(TestDataHelper.BuildActiveSession(token: "tok-known"));
-
-        var result = auth.Logout("tok-missing");
-
+        var result = CreateAuthWithSession(TestDataHelper.BuildActiveSession(token: "tok-known")).Logout("tok-missing");
         Assert.IsFalse(result.IsSuccess);
-        Assert.Contains(result.Message.ToLowerInvariant(), "session not found.");
+        StringAssert.Contains(result.Message.ToLowerInvariant(), "session not found.");
     }
 }
