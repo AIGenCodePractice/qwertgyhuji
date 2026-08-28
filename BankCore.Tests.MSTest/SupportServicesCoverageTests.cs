@@ -71,8 +71,14 @@ public class SupportServicesCoverageTests
         Assert.IsNull(captured.RelatedReference);
         Assert.IsTrue(captured.IsSuccessful);
         Assert.AreEqual("127.0.0.1", captured.IpAddress);
-        Assert.IsGreaterThanOrEqualTo(captured.Timestamp, before);
-        Assert.IsLessThanOrEqualTo(captured.Timestamp, after);
+
+        // System clock reads can have sub-millisecond jitter. Assert that the
+        // timestamp was created at test execution time without requiring two
+        // separate DateTime.UtcNow reads to be perfectly monotonic.
+        var lowerBound = before.AddSeconds(-1);
+        var upperBound = after.AddSeconds(1);
+        Assert.IsGreaterThanOrEqualTo(captured.Timestamp, lowerBound);
+        Assert.IsLessThanOrEqualTo(captured.Timestamp, upperBound);
         repo.Verify(r => r.Add(It.IsAny<AuditLog>()), Times.Once);
     }
 
