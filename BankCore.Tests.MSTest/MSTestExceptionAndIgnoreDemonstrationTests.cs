@@ -4,9 +4,9 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace BankCore.Tests.MSTest;
 
 /// <summary>
-/// Explicit MSTest 4 exception and Ignore demonstrations.
-/// MSTest 4 removed ExpectedExceptionAttribute and Assert.ThrowsException&lt;T&gt;,
-/// so the current supported Assert.Throws&lt;T&gt; API is used for the six exception paths.
+/// Explicit MSTest exception and Ignore demonstrations required by Phase 3.
+/// The project uses MSTest 3.x so both legacy rubric APIs are available:
+/// ExpectedExceptionAttribute and Assert.ThrowsException&lt;T&gt;.
 /// </summary>
 [TestClass]
 public class MSTestExceptionAndIgnoreDemonstrationTests
@@ -14,52 +14,56 @@ public class MSTestExceptionAndIgnoreDemonstrationTests
     private readonly InterestCalculator _calculator = new();
 
     // -----------------------------------------------------------------
-    // Exception assertion demonstrations (six distinct invalid paths)
+    // [ExpectedException] demonstrations (three distinct invalid paths)
     // -----------------------------------------------------------------
 
     [TestMethod]
-    public void Throws_SimpleInterest_ZeroPrincipal()
+    [ExpectedException(typeof(ArgumentException))]
+    public void ExpectedException_SimpleInterest_ZeroPrincipal()
     {
-        Assert.Throws<ArgumentException>(() =>
-            _calculator.SimpleInterest(0m, 0.05m, 12));
+        _calculator.SimpleInterest(0m, 0.05m, 12);
     }
 
     [TestMethod]
-    public void Throws_CompoundInterest_NegativeRate()
+    [ExpectedException(typeof(ArgumentException))]
+    public void ExpectedException_CompoundInterest_NegativeRate()
     {
-        Assert.Throws<ArgumentException>(() =>
-            _calculator.CompoundInterest(1000m, -0.01m, 12, 12));
+        _calculator.CompoundInterest(1000m, -0.01m, 12, 12);
     }
 
     [TestMethod]
-    public void Throws_DailyInterest_ZeroDays()
+    [ExpectedException(typeof(ArgumentException))]
+    public void ExpectedException_DailyInterest_ZeroDays()
     {
-        Assert.Throws<ArgumentException>(() =>
-            _calculator.DailyInterest(1000m, 0.05m, 0));
+        _calculator.DailyInterest(1000m, 0.05m, 0);
     }
 
+    // -----------------------------------------------------------------
+    // Assert.ThrowsException<T> demonstrations (three distinct paths)
+    // -----------------------------------------------------------------
+
     [TestMethod]
-    public void Throws_EffectiveAnnualRate_NegativeRate()
+    public void ThrowsException_EffectiveAnnualRate_NegativeRate()
     {
-        var exception = Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.ThrowsException<ArgumentException>(() =>
             _calculator.EffectiveAnnualRate(-0.01m, 12));
 
         StringAssert.Contains(exception.Message, "Rate cannot be negative");
     }
 
     [TestMethod]
-    public void Throws_CompoundInterest_ZeroFrequency()
+    public void ThrowsException_CompoundInterest_ZeroFrequency()
     {
-        var exception = Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.ThrowsException<ArgumentException>(() =>
             _calculator.CompoundInterest(1000m, 0.05m, 12, 0));
 
         StringAssert.Contains(exception.Message, "Compounding frequency must be positive");
     }
 
     [TestMethod]
-    public void Throws_FutureValue_ZeroMonths()
+    public void ThrowsException_FutureValue_ZeroMonths()
     {
-        var exception = Assert.Throws<ArgumentException>(() =>
+        var exception = Assert.ThrowsException<ArgumentException>(() =>
             _calculator.FutureValue(1000m, 0.05m, 0));
 
         StringAssert.Contains(exception.Message, "Months must be positive");
