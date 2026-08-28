@@ -9,7 +9,7 @@ namespace BankCore.Tests.MSTest;
 
 /// <summary>
 /// REQ-NF-001 … REQ-NF-003 / TC-NF-* (unit-level proxies for non-functional requirements).
-/// Full load tests would be integration/system; these guard obvious regressions.
+/// These tests guard application-level regressions; they are not presented as full system load tests.
 /// </summary>
 [TestClass]
 public class NonFunctionalTests
@@ -28,8 +28,7 @@ public class NonFunctionalTests
         _txns = new Mock<ITransactionRepository>();
         _validator = new Mock<IValidationService>();
         _audit = new Mock<IAuditService>();
-        _validator.Setup(v => v.IsValidAmount(It.IsAny<decimal>(), It.IsAny<decimal>(), It.IsAny<decimal>()))
-            .Returns(true);
+        _validator.Setup(v => v.IsValidAmount(It.IsAny<decimal>(), It.IsAny<decimal>(), It.IsAny<decimal>())).Returns(true);
 
         _account = new Account
         {
@@ -48,12 +47,12 @@ public class NonFunctionalTests
         _txnService = new TransactionService(_accounts.Object, _txns.Object, _validator.Object, _audit.Object);
     }
 
-    /// <summary>TC-NF-PERF-001 — many sequential deposits complete under a soft time budget</summary>
+    /// <summary>TC-NF-PERF-001 — 1,000 sequential application-level deposits complete under the time budget.</summary>
     [TestMethod]
     [TestCategory("Performance")]
     public void TC_NF_PERF_001_SequentialDeposits_CompleteWithinBudget()
     {
-        const int count = 200; // scaled unit proxy for "1000 sequential" (full load = system test)
+        const int count = 1_000;
         var sw = Stopwatch.StartNew();
         for (int i = 0; i < count; i++)
         {
@@ -61,47 +60,64 @@ public class NonFunctionalTests
             Assert.IsTrue(result.IsSuccess, result.Message);
         }
         sw.Stop();
+
+        _txns.Verify(r => r.Add(It.IsAny<Transaction>()), Times.Exactly(count));
+        Assert.AreEqual(1_001_000m, _account.Balance);
         Assert.IsTrue(sw.ElapsedMilliseconds < 15_000,
-            $"200 deposits took {sw.ElapsedMilliseconds}ms (budget 15s)");
+            $"{count} deposits took {sw.ElapsedMilliseconds}ms (budget 15s)");
     }
 
-    /// <summary>TC-NF-PERF-002 — statement-sized loop stays responsive</summary>
+    /// <summary>TC-NF-PERF-002 — repeated transaction history requests remain responsive.</summary>
     [TestMethod]
     [TestCategory("Performance")]
-    public void TC_NF_PERF_002_RapidBalanceReads_NoExcessiveTime()
+    public void TC_NF_PERF_002_RapidHistoryReads_NoExcessiveTime()
     {
+        _txns.Setup(r => r.GetByAccountId(1)).Returns(new List<Transaction>());
+
+        const int count = 500;
         var sw = Stopwatch.StartNew();
-        for (int i = 0; i < 500; i++)
-            _ = _accounts.Object.GetById(1);
+        for (int i = 0; i < count; i++)
+        {
+            var result = _txnService.GetTransactionHistory(1);
+            Assert.IsTrue(result.IsSuccess, result.Message);
+        }
         sw.Stop();
-        Assert.IsTrue(sw.ElapsedMilliseconds < 5_000);
+
+        _txns.Verify(r => r.GetByAccountId(1), Times.Exactly(count));
+        Assert.IsTrue(sw.ElapsedMilliseconds < 5_000,
+            $"{count} transaction history requests took {sw.ElapsedMilliseconds}ms (budget 5s)");
     }
 
-    /// <summary>TC-NF-ROB-001 — oversized description does not crash the service</summary>
+    /// <summary>TC-NF-ROB-001 — oversized description is handled without an unhandled exception.</summary>
     [TestMethod]
     [TestCategory("Robustness")]
-    public void TC_NF_ROB_001_OversizedDescription_DoesNotCrash()
+    public void TC_NF_ROB_001_OversizedDescription_IsHandledGracefully()
     {
         var huge = new string('X', 50_000);
         var result = _txnService.Deposit(1, 10m, huge, "TELLER01");
-        // Either succeeds or fails gracefully — must not throw
+
         Assert.IsNotNull(result);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(result.Message));
     }
 
-    /// <summary>TC-NF-ROB-002 — rapid successive mixed ops without exception</summary>
+    /// <summary>TC-NF-ROB-002 — rapid successive mixed operations preserve a deterministic balance.</summary>
     [TestMethod]
     [TestCategory("Robustness")]
-    public void TC_NF_ROB_002_RapidMixedOperations_NoCrash()
+    public void TC_NF_ROB_002_RapidMixedOperations_PreserveExpectedBalance()
     {
-        for (int i = 0; i < 50; i++)
+        const int count = 50;
+        for (int i = 0; i < count; i++)
         {
-            Assert.IsNotNull(_txnService.Deposit(1, 5m, "d", "T"));
-            Assert.IsNotNull(_txnService.Withdraw(1, 1m, "w", "T"));
+            var deposit = _txnService.Deposit(1, 5m, "d", "T");
+            var withdrawal = _txnService.Withdraw(1, 1m, "w", "T");
+            Assert.IsTrue(deposit.IsSuccess, deposit.Message);
+            Assert.IsTrue(withdrawal.IsSuccess, withdrawal.Message);
         }
-        Assert.IsTrue(_account.Balance > 0);
+
+        Assert.AreEqual(1_000_000m + (count * 4m), _account.Balance);
+        Assert.AreEqual(count, _account.DailyWithdrawnToday);
     }
 
-    /// <summary>TC-NF-SEC-001 — blank/missing session cannot validate as authenticated</summary>
     [TestMethod]
     [TestCategory("Security")]
     public void TC_NF_SEC_001_BlankSession_CannotAuthenticate()
@@ -113,14 +129,12 @@ public class NonFunctionalTests
         var mockVal = new Mock<IValidationService>();
         mockSessions.Setup(s => s.GetByToken(It.IsAny<string>())).Returns((Session?)null);
 
-        var auth = new AuthService(mockUsers.Object, mockSessions.Object, mockHasher.Object,
-            mockAudit.Object, mockVal.Object);
+        var auth = new AuthService(mockUsers.Object, mockSessions.Object, mockHasher.Object, mockAudit.Object, mockVal.Object);
 
         Assert.IsFalse(auth.ValidateSession("").IsSuccess);
         Assert.IsFalse(auth.ValidateSession("forged-token").IsSuccess);
     }
 
-    /// <summary>TC-NF-SEC-002 — password material stored as hash fields, not compared as plain text in User model path</summary>
     [TestMethod]
     [TestCategory("Security")]
     public void TC_NF_SEC_002_UserModel_UsesHashFields_NotPlainPasswordProperty()
