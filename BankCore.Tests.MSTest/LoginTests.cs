@@ -44,16 +44,10 @@ public class LoginTests
     {
         _mockUsers = TestMockFactory.CreateUserRepositoryWithUser(user);
         _mockHasher = TestMockFactory.CreatePasswordHasher(correctPassword);
-        _auth = new AuthService(
-            _mockUsers.Object,
-            _mockSessions!.Object,
-            _mockHasher.Object,
-            _mockAudit!.Object,
-            _mockValidator!.Object);
+        _auth = new AuthService(_mockUsers.Object, _mockSessions!.Object, _mockHasher.Object, _mockAudit!.Object, _mockValidator!.Object);
         return _auth;
     }
 
-    /// <summary>TC-AUTH-001 — Successful login with valid credentials</summary>
     [TestMethod]
     [TestCategory("Smoke")]
     [TestCategory("Functional")]
@@ -61,7 +55,6 @@ public class LoginTests
     {
         var user = TestDataHelper.BuildUser(username: "jdoe");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
         var result = auth.Login("jdoe", TestDataHelper.ValidPassword);
 
         Assert.IsTrue(result.IsSuccess);
@@ -73,15 +66,12 @@ public class LoginTests
         _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Once);
     }
 
-    /// <summary>TC-AUTH-005 — Password comparison is case-sensitive</summary>
     [TestMethod]
     [TestCategory("Functional")]
     public void Login_WrongCasePassword_IsRejected()
     {
         var user = TestDataHelper.BuildUser(username: "jdoe");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
-        // Same characters, different case — must fail because hasher is exact-match
         var wrongCase = TestDataHelper.ValidPassword.ToLowerInvariant();
         Assert.AreNotEqual(TestDataHelper.ValidPassword, wrongCase);
 
@@ -92,7 +82,6 @@ public class LoginTests
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
-    /// <summary>TC-AUTH-006 — Unlock account after admin unlock and successful login</summary>
     [TestMethod]
     [TestCategory("Functional")]
     public void UnlockThenLogin_Succeeds()
@@ -100,47 +89,40 @@ public class LoginTests
         var user = TestDataHelper.BuildLockedUser(username: "locked_user");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
 
-        // Still locked — should fail
         var lockedResult = auth.Login("locked_user", TestDataHelper.ValidPassword);
         Assert.IsFalse(lockedResult.IsSuccess);
         Assert.Contains(lockedResult.Message.ToLowerInvariant(), "account is locked. contact your administrator.");
 
-        // Admin unlock
         var unlock = auth.UnlockUser("locked_user", "admin1");
         Assert.IsTrue(unlock.IsSuccess);
         Assert.IsFalse(user.IsLocked);
         Assert.AreEqual(0, user.FailedLoginAttempts);
 
-        // Login after unlock
         var result = auth.Login("locked_user", TestDataHelper.ValidPassword);
         Assert.IsTrue(result.IsSuccess);
         Assert.IsNotNull(result.Data);
     }
 
-    /// <summary>TC-AUTH-007 — Reject login with incorrect password</summary>
     [TestMethod]
     [TestCategory("Negative")]
     public void Login_IncorrectPassword_ReturnsFailure()
     {
         var user = TestDataHelper.BuildUser(username: "jdoe");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
         var result = auth.Login("jdoe", "WrongP@ss99");
 
         Assert.IsFalse(result.IsSuccess);
         Assert.Contains(result.Message.ToLowerInvariant(), "invalid username or password.");
-        _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Once); // failed attempt recorded
+        _mockUsers!.Verify(u => u.Update(It.IsAny<User>()), Times.Once);
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
-    /// <summary>TC-AUTH-008 — Reject login with non-existent username</summary>
     [TestMethod]
     [TestCategory("Negative")]
     public void Login_NonExistentUsername_ReturnsFailure()
     {
         var user = TestDataHelper.BuildUser(username: "jdoe");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
         var result = auth.Login("nobody", TestDataHelper.ValidPassword);
 
         Assert.IsFalse(result.IsSuccess);
@@ -148,14 +130,12 @@ public class LoginTests
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
-    /// <summary>TC-AUTH-009 — Reject login to a locked account</summary>
     [TestMethod]
     [TestCategory("Negative")]
     public void Login_LockedAccount_ReturnsFailure()
     {
         var user = TestDataHelper.BuildLockedUser(username: "locked_user");
         var auth = CreateAuth(user, TestDataHelper.ValidPassword);
-
         var result = auth.Login("locked_user", TestDataHelper.ValidPassword);
 
         Assert.IsFalse(result.IsSuccess);
@@ -163,7 +143,7 @@ public class LoginTests
         _mockSessions!.Verify(s => s.Add(It.IsAny<Session>()), Times.Never);
     }
 
-    [TestMethod]
+    [DataTestMethod]
     [TestCategory("Negative")]
     [DataRow(null)]
     [DataRow("")]
