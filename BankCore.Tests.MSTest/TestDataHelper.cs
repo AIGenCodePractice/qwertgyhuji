@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BankCore.Core.Models;
 using BankCore.Tests.MSTest.Helpers;
 
@@ -5,22 +6,60 @@ namespace BankCore.Tests.MSTest;
 
 /// <summary>
 /// Shared MSTest builder/factory utility. Produces valid and invalid fixtures so test classes
-/// do not duplicate setup logic. Passwords are not hardcoded in test methods — they are read
-/// from this helper (simulating configuration / TestContext-style centralisation).
+/// do not duplicate setup logic. Test passwords are loaded from testsettings.json copied to the
+/// test output directory rather than hardcoded in individual test methods.
 /// </summary>
 public static class TestDataHelper
 {
-    // Centralised credentials — tests must not hardcode passwords inline.
-    public const string ValidPassword = "SecureP@ss1";
-    public const string WeakPassword = "weak";
-    public const string MinLengthPassword = "Ab1!xxxx"; // exactly 8 chars, meets complexity
-    public const string BelowMinPassword = "Ab1!xxx";  // 7 chars
+    private sealed class TestSettings
+    {
+        public TestCredentials TestCredentials { get; init; } = new();
+    }
+
+    private sealed class TestCredentials
+    {
+        public string ValidPassword { get; init; } = string.Empty;
+        public string WeakPassword { get; init; } = string.Empty;
+        public string MinLengthPassword { get; init; } = string.Empty;
+        public string BelowMinPassword { get; init; } = string.Empty;
+    }
+
+    private static readonly TestCredentials Credentials = LoadCredentials();
+
+    public static string ValidPassword => Credentials.ValidPassword;
+    public static string WeakPassword => Credentials.WeakPassword;
+    public static string MinLengthPassword => Credentials.MinLengthPassword;
+    public static string BelowMinPassword => Credentials.BelowMinPassword;
 
     public const string ValidOwnerName = "Thabo Molefe";
     public const string ValidIdNumber = "9001015800085";
     public const string ValidBranchCode = "250655";
     public const string ValidEmail = "thabo.molefe@example.co.za";
     public const string ValidPhone = "0821234567";
+
+    private static TestCredentials LoadCredentials()
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "testsettings.json");
+        if (!File.Exists(path))
+            throw new FileNotFoundException("Required MSTest configuration file was not found.", path);
+
+        var json = File.ReadAllText(path);
+        var settings = JsonSerializer.Deserialize<TestSettings>(json,
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        var credentials = settings?.TestCredentials
+            ?? throw new InvalidOperationException("TestCredentials configuration is missing.");
+
+        if (string.IsNullOrWhiteSpace(credentials.ValidPassword) ||
+            string.IsNullOrWhiteSpace(credentials.WeakPassword) ||
+            string.IsNullOrWhiteSpace(credentials.MinLengthPassword) ||
+            string.IsNullOrWhiteSpace(credentials.BelowMinPassword))
+        {
+            throw new InvalidOperationException("One or more required test credentials are missing.");
+        }
+
+        return credentials;
+    }
 
     public static Account BuildAccount(
         int id = 1,
